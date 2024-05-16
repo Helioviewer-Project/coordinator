@@ -11,6 +11,7 @@ click==8.1.7
 Flask==3.0.3
 frozenlist==1.4.1
 idna==3.7
+iniconfig==2.0.0
 itsdangerous==2.2.0
 Jinja2==3.1.4
 MarkupSafe==2.1.5
@@ -21,9 +22,11 @@ packaging==24.0
 parfive==2.1.0
 pathspec==0.12.1
 platformdirs==4.2.2
+pluggy==1.5.0
 pydantic==2.7.1
 pydantic_core==2.18.2
 pyerfa==2.0.1.4
+pytest==8.2.0
 PyYAML==6.0.1
 setuptools==69.5.1
 sunpy==5.1.3
