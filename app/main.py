@@ -37,6 +37,7 @@ class NormalizeHpcQueryParameters(HvBaseModel):
     y: float
     obstime: str
 
+
 @app.route("/hpc", methods=["GET"])
 def _normalize_hpc():
     try:

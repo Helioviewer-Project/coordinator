@@ -1,6 +1,7 @@
 import pytest
 from ..normalizer import normalize_hpc
 
+
 def test_normalize():
     # Using RHESSI Flare 12070596 as the test subject
     # hpc_x = 515
