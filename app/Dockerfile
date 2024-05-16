@@ -29,4 +29,4 @@ RUN export FLASK_APP=main.py
 # copy application files to the container
 COPY --chown=nonroot:nonroot . .
 
-CMD ["python", "-m", "flask", "--app", "main.py", "run"]
+CMD ["gunicorn", "-w", "3", "-t", "60", "-b", "0.0.0.0:80", "main:app"]
