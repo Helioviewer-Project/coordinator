@@ -12,6 +12,7 @@ services:
     environment:
       VIRTUAL_HOST: localhost
     restart: always
+    image: dgarciabriseno/hv-coordinator
     build: app
     healthcheck:
       test: ["CMD-SHELL", "curl --silent --fail localhost/flask-health-check || exit 1"]
