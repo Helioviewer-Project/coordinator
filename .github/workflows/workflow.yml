@@ -3,6 +3,8 @@ name: Test and Deploy
 on:
   push:
     branches: [ "main" ]
+    tags:
+      - v**
   pull_request:
     branches: [ "main" ]
 
@@ -52,8 +54,8 @@ jobs:
 
   # Build and push containers to docker
   docker:
-    # Only build and push containers on push
-    if: ${{ github.event_name == 'push' }}
+    # Only build and push containers on version tags
+    if: ${{ github.event_name == 'push' && github.ref_type == 'tag'}}
     runs-on: ubuntu-latest
 
     steps:
