@@ -5,7 +5,31 @@ on:
     branches: [ "main" ]
 
 jobs:
+  # Run python tests
+  pytest:
+    runs-on: ubuntu-latest
+
+  - name: Set up Python 3.12.3
+    uses: actions/setup-python@v3
+    with:
+      python-version: "3.12.3"
+
+  - name: Install dependencies
+      run: |
+        cd app
+        python -m pip install --upgrade pip
+        pip install pytest
+        pip install -r requirements.txt
+
+
+  - name: Run pytest
+      run: cd app && python -m pytest .
+
+
+  # Build and push containers to docker
   docker:
+    # Only build and push containers on push
+    if: ${{ github.event_name == 'push' }}
     runs-on: ubuntu-latest
 
     steps:
