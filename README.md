@@ -37,3 +37,18 @@ Returns:
 ```
 { x: float, y: float }
 ```
+
+### GET /hpc
+
+Normalize a helioprojective coordinate into Helioviewer's coordinate frame.
+
+| query parameter | description |
+|-----------------|-------------|
+| x               | X position in arcseconds |
+| y               | Y position in arcseconds |
+| obstime         | Time that the measurement was taken |
+
+Returns:
+```
+{ x: float, y: float }
+```
