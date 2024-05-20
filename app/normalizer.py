@@ -2,6 +2,7 @@ from astropy.coordinates import SkyCoord
 from astropy.time import Time
 import astropy.units as u
 from sunpy.coordinates import Helioprojective
+from sunpy.physics.differential_rotation import solar_rotate_coordinate
 from frames import get_helioviewer_frame, get_earth_frame
 
 
@@ -29,4 +30,4 @@ def normalize_hpc(x: float, y: float, event_time: Time, target: Time) -> SkyCoor
     with Helioprojective.assume_spherical_screen(
         hv_frame.observer, only_off_disk=True
     ):
-        return real_coord.transform_to(hv_frame)
+        return solar_rotate_coordinate(real_coord, hv_frame.observer)

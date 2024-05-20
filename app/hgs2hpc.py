@@ -2,6 +2,7 @@ from astropy.coordinates import SkyCoord
 from astropy.time import Time
 import astropy.units as u
 from sunpy.coordinates import frames, transform_with_sun_center
+from sunpy.physics.differential_rotation import solar_rotate_coordinate
 
 from frames import get_helioviewer_frame
 
@@ -24,6 +25,7 @@ def hgs2hpc(lat: float, lon: float, event_time: Time, target: Time) -> SkyCoord:
     target : Time
         Desired observation time
     """
+    hv_frame = get_helioviewer_frame(target)
     with transform_with_sun_center():
         coord = SkyCoord(
             lon * u.deg,
@@ -31,5 +33,4 @@ def hgs2hpc(lat: float, lon: float, event_time: Time, target: Time) -> SkyCoord:
             frame=frames.HeliographicStonyhurst,
             obstime=event_time,
         )
-        hpc = coord.transform_to(get_helioviewer_frame(target))
-        return hpc
+        return solar_rotate_coordinate(coord, hv_frame.observer)
