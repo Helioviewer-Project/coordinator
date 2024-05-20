@@ -4,7 +4,7 @@ import astropy.units as u
 from sunpy.coordinates import frames, transform_with_sun_center
 from sunpy.physics.differential_rotation import solar_rotate_coordinate
 
-from frames import get_helioviewer_frame
+from frames import get_helioviewer_frame, get_earth_frame
 
 
 def hgs2hpc(lat: float, lon: float, event_time: Time, target: Time) -> SkyCoord:
@@ -30,7 +30,10 @@ def hgs2hpc(lat: float, lon: float, event_time: Time, target: Time) -> SkyCoord:
         coord = SkyCoord(
             lon * u.deg,
             lat * u.deg,
-            frame=frames.HeliographicStonyhurst,
-            obstime=event_time,
+            frame=frames.HeliographicStonyhurst(obstime=event_time),
         )
-        return solar_rotate_coordinate(coord, hv_frame.observer)
+        # First convert to an hpc coordinate
+        earth_frame = get_earth_frame(event_time)
+        hpc = coord.transform_to(earth_frame)
+        # Then apply the rotation as seen from Helioviewer
+        return solar_rotate_coordinate(hpc, hv_frame.observer)

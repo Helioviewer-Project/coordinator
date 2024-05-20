@@ -33,3 +33,29 @@ def test_hpc(client: FlaskClient):
     coord = json.loads(response.get_data())
     # The x coordinate is expected to move to the right approximately 9 arcseconds
     assert (coord['x'] - 9) > 0
+
+def test_hgs2hpc(client: FlaskClient):
+    # Missing lat
+    response = client.get("/hgs2hpc?lon=0&event_time=2012-01-01")
+    assert response.status_code == 400
+    # Missing lon
+    response = client.get("/hgs2hpc?lat=0&event_time=2012-01-01")
+    assert response.status_code == 400
+    # Missing event_time
+    response = client.get("/hgs2hpc?lat=0&lon=0")
+    assert response.status_code == 400
+
+    # Typical request, in this case expect that the hpc x coordinate is 0
+    response = client.get("/hgs2hpc?lat=0&lon=0&event_time=2012-01-01 00:00:00")
+    assert response.status_code == 200
+    coord = json.loads(response.get_data())
+    assert coord['x'] == 0
+
+    # Same as the above request, but change the target time to 1 hour ahead
+    # This should apply the differential rotation and the x coordinate should
+    # move to the right approximately 9 arcseconds
+    response = client.get("/hgs2hpc?lat=0&lon=0&event_time=2012-01-01 00:00:00&target=2012-01-01 01:00:00")
+    assert response.status_code == 200
+    coord = json.loads(response.get_data())
+    assert (coord['x'] - 9) > 0
+
