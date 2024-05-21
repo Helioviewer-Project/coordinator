@@ -31,7 +31,7 @@ Convert a heliographic stonyhurst coordinate into a helioprojective coordinate.
 |-----------------|-------------|
 | lat             | Latitude coordinate in degrees |
 | lon             | Longitude coordinate in degrees |
-| obstime         | Time that the measurement was taken |
+| event_time      | Time that the measurement was taken |
 | target          | (Optional) Desired observation time. Applies differential rotation |
 
 Returns:
@@ -47,7 +47,7 @@ Normalize a helioprojective coordinate into Helioviewer's coordinate frame.
 |-----------------|-------------|
 | x               | X position in arcseconds |
 | y               | Y position in arcseconds |
-| obstime         | Time that the measurement was taken |
+| event_time      | Time that the measurement was taken |
 | target          | (Optional) Desired observation time. Applies differential rotation |
 
 Returns:
