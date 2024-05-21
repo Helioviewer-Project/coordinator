@@ -56,7 +56,7 @@ def test_hgs2hpc(client: FlaskClient):
 
     # Test invalid time
     response = client.get("/hgs2hpc?lat=0&lon=0&event_time=NotATime")
-    assert response.status_code != 500
+    assert response.status_code == 400
 
     # Typical request, in this case expect that the hpc x coordinate is 0
     response = client.get("/hgs2hpc?lat=0&lon=0&event_time=2012-01-01 00:00:00")
@@ -73,6 +73,22 @@ def test_hgs2hpc(client: FlaskClient):
     assert response.status_code == 200
     coord = json.loads(response.get_data())
     assert 9 < coord["x"] and coord["x"] < 10
+
+    # Verify correct status is returned when an invalid latitude longitude
+    # coordinate is given. latitude/longitude must be between -90 and 90 inclusive.
+    # Sunpy has no restriction on longitude, so all values are allowed
+    # Test latitude is greater than 90
+    response = client.get("/hgs2hpc?lat=90.1&lon=0&event_time=2012-01-01 00:00:00")
+    assert response.status_code == 400
+    data = json.loads(response.get_data())
+    assert data[0]["loc"][0] == "lat"
+
+    # Test latitude is less than -90
+    response = client.get("/hgs2hpc?lat=-90.1&lon=0&event_time=2012-01-01 00:00:00")
+    assert response.status_code == 400
+    data = json.loads(response.get_data())
+    assert data[0]["loc"][0] == "lat"
+
 
 
 def test_healthcheck(client: FlaskClient):
