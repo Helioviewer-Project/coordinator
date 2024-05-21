@@ -77,17 +77,23 @@ jobs:
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - name: Docker meta
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: dgarciabriseno/hv-coordinator
+        # generate Docker tags based on the tagged release
+        tags: type=semver,pattern={{version}}
     - name: Build and push Docker images
       uses: docker/build-push-action@v5.3.0
       with:
         # Build's context is the set of files located in the specified PATH or URL
         context: app
-        # List of metadata for an image
-        labels: ${{ github.ref_name }},latest
         # List of target platforms for build
         platforms: linux/amd64,linux/arm64
         # List of tags
-        tags: dgarciabriseno/hv-coordinator
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
         # Push to hub
         push: ${{ github.event_name == 'push' && github.ref_type == 'tag'}}
 
