@@ -63,7 +63,6 @@ jobs:
   # Build and push containers to docker
   docker:
     # Only build and push containers on version tags
-    if: ${{ github.event_name == 'push' && github.ref_type == 'tag'}}
     runs-on: ubuntu-latest
 
     steps:
@@ -90,5 +89,5 @@ jobs:
         # List of tags
         tags: dgarciabriseno/hv-coordinator
         # Push to hub
-        push: true
+        push: ${{ github.event_name == 'push' && github.ref_type == 'tag'}}
 
