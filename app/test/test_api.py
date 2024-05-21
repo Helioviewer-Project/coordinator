@@ -36,7 +36,7 @@ def test_hpc(client: FlaskClient):
     assert response.status_code == 200
     coord = json.loads(response.get_data())
     # The x coordinate is expected to move to the right approximately 9 arcseconds
-    assert (coord["x"] - 9) > 0
+    assert 9 < coord["x"] and coord["x"] < 10
 
 
 def test_hgs2hpc(client: FlaskClient):
@@ -68,7 +68,7 @@ def test_hgs2hpc(client: FlaskClient):
     )
     assert response.status_code == 200
     coord = json.loads(response.get_data())
-    assert (coord["x"] - 9) > 0
+    assert 9 < coord["x"] and coord["x"] < 10
 
 
 def test_healthcheck(client: FlaskClient):
