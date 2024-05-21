@@ -10,7 +10,7 @@ API is meant to run in parallel with Helioviewer.
 ## Usage
 Running with docker:
 ```
-docker compose up --wait
+docker run --rm -t dgarciabriseno/hv-coordinator
 ```
 
 Running manually with python
