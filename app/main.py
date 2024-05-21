@@ -55,4 +55,10 @@ def _normalize_hpc():
 
 @app.route("/flask-health-check")
 def flask_health_check():
+    """
+    Performs a simple self test to make sure functions used will run
+    without exceptions
+    """
+    normalize_hpc(515, -342, "2012-07-05 13:01:46", "2012-07-05 13:01:46")
+    hgs2hpc(99, 99, "2024-01-01", "2024-01-02")
     return "success"
