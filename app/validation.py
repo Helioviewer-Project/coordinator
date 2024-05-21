@@ -4,7 +4,8 @@ Contains validation related functions
 
 from typing_extensions import Annotated
 from astropy.time import Time
-from pydantic import AfterValidator, BaseModel, ConfigDict, ValidationError
+from pydantic import AfterValidator, BaseModel, ConfigDict
+
 
 # This function is used by Pydantic to verify the user input
 # is a valid time.
@@ -20,13 +21,16 @@ def make_time(value: str) -> Time:
     """
     return Time(value)
 
+
 # Custom validation type which resolves to an astropy.Time instance
 AstropyTime = Annotated[str, AfterValidator(make_time)]
+
 
 class HvBaseModel(BaseModel):
     """
     Base pydantic model to use for type checking
     """
+
     # Disable sending extra fields, only fields in
     # the model are allowed
     model_config = ConfigDict(extra="forbid")

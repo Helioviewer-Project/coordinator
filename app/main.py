@@ -6,6 +6,7 @@ from validation import AstropyTime, HvBaseModel
 
 app = Flask("Helioviewer")
 
+
 class Hgs2HpcQueryParameters(HvBaseModel):
     lat: float
     lon: float
@@ -17,6 +18,7 @@ class Hgs2HpcQueryParameters(HvBaseModel):
         super().__init__(*args, **kwargs)
         if self.target is None:
             self.target = self.event_time
+
 
 @app.route("/hgs2hpc", methods=["GET"])
 def _hgs2hpc():
@@ -39,6 +41,7 @@ class NormalizeHpcQueryParameters(HvBaseModel):
         super().__init__(*args, **kwargs)
         if self.target is None:
             self.target = self.event_time
+
 
 @app.route("/hpc", methods=["GET"])
 def _normalize_hpc():

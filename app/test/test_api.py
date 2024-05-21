@@ -3,9 +3,11 @@ import pytest
 from flask.testing import FlaskClient
 from ..main import app
 
+
 @pytest.fixture
 def client():
     return app.test_client()
+
 
 def test_hpc(client: FlaskClient):
     # Missing x
@@ -24,15 +26,18 @@ def test_hpc(client: FlaskClient):
     response = client.get("/hpc?x=515&y=-342&event_time=2012-07-05+13:01:46")
     assert response.status_code == 200
     coord = json.loads(response.get_data())
-    assert pytest.approx(coord['x']) == 523.6178
-    assert pytest.approx(coord['y']) == -347.7228
+    assert pytest.approx(coord["x"]) == 523.6178
+    assert pytest.approx(coord["y"]) == -347.7228
 
     # Converting to target time
-    response = client.get("/hpc?x=0&y=0&event_time=2012-01-01 00:00:00&target=2012-01-01 01:00:00")
+    response = client.get(
+        "/hpc?x=0&y=0&event_time=2012-01-01 00:00:00&target=2012-01-01 01:00:00"
+    )
     assert response.status_code == 200
     coord = json.loads(response.get_data())
     # The x coordinate is expected to move to the right approximately 9 arcseconds
-    assert (coord['x'] - 9) > 0
+    assert (coord["x"] - 9) > 0
+
 
 def test_hgs2hpc(client: FlaskClient):
     # Missing lat
@@ -49,15 +54,18 @@ def test_hgs2hpc(client: FlaskClient):
     response = client.get("/hgs2hpc?lat=0&lon=0&event_time=2012-01-01 00:00:00")
     assert response.status_code == 200
     coord = json.loads(response.get_data())
-    assert coord['x'] == 0
+    assert coord["x"] == 0
 
     # Same as the above request, but change the target time to 1 hour ahead
     # This should apply the differential rotation and the x coordinate should
     # move to the right approximately 9 arcseconds
-    response = client.get("/hgs2hpc?lat=0&lon=0&event_time=2012-01-01 00:00:00&target=2012-01-01 01:00:00")
+    response = client.get(
+        "/hgs2hpc?lat=0&lon=0&event_time=2012-01-01 00:00:00&target=2012-01-01 01:00:00"
+    )
     assert response.status_code == 200
     coord = json.loads(response.get_data())
-    assert (coord['x'] - 9) > 0
+    assert (coord["x"] - 9) > 0
+
 
 def test_healthcheck(client: FlaskClient):
     assert client.get("/flask-health-check").get_data(as_text=True) == "success"
