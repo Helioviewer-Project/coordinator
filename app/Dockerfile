@@ -15,7 +15,7 @@ ENV PIP=/home/nonroot/.conda/envs/coordinator/bin/pip
 # Install dependencies in conda environment
 RUN <<EOF
 mamba create -n coordinator -y python=3.12.3
-$PIP install -r requirements.txt
+$PIP install --no-cache-dir -r requirements.txt
 EOF
 
 HEALTHCHECK --interval=2s --timeout=2s \
