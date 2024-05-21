@@ -59,3 +59,5 @@ def test_hgs2hpc(client: FlaskClient):
     coord = json.loads(response.get_data())
     assert (coord['x'] - 9) > 0
 
+def test_healthcheck(client: FlaskClient):
+    assert client.get("/flask-health-check").get_data(as_text=True) == "success"
