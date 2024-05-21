@@ -1,5 +1,7 @@
 FROM condaforge/mambaforge
 
+RUN apt update && apt install -y curl
+
 # Create and switch to non-root user
 RUN useradd -m -s /bin/bash nonroot
 WORKDIR /home/nonroot/app
@@ -19,7 +21,7 @@ $PIP install --no-cache-dir -r requirements.txt
 EOF
 
 HEALTHCHECK --interval=2s --timeout=2s \
-    CMD curl --silent --fail localhost/flask-health-check || exit 1
+    CMD curl --silent --fail "http://127.0.0.1/flask-health-check"
 
 ENTRYPOINT ["/home/nonroot/.conda/envs/coordinator/bin/python"]
 
