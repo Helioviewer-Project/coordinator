@@ -29,6 +29,10 @@ def test_hpc(client: FlaskClient):
     assert pytest.approx(coord["x"]) == 523.6178
     assert pytest.approx(coord["y"]) == -347.7228
 
+    # Test invalid time
+    response = client.get("/hgs2hpc?lat=0&lon=0&event_time=NotATime")
+    assert response.status_code != 500
+
     # Converting to target time
     response = client.get(
         "/hpc?x=0&y=0&event_time=2012-01-01 00:00:00&target=2012-01-01 01:00:00"
