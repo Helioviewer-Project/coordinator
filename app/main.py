@@ -1,5 +1,3 @@
-from typing import Annotated
-
 from flask import Flask, request
 from pydantic import ValidationError, Field
 

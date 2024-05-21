@@ -90,6 +90,5 @@ def test_hgs2hpc(client: FlaskClient):
     assert data[0]["loc"][0] == "lat"
 
 
-
 def test_healthcheck(client: FlaskClient):
     assert client.get("/flask-health-check").get_data(as_text=True) == "success"
