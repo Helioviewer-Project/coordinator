@@ -27,7 +27,7 @@ def _hgs2hpc():
         coord = hgs2hpc(params.lat, params.lon, params.event_time, params.target)
         return {"x": coord.Tx.value, "y": coord.Ty.value}
     except ValidationError as e:
-        return e.errors(), 400
+        return e.errors(include_context=False), 400
 
 
 class NormalizeHpcQueryParameters(HvBaseModel):

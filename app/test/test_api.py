@@ -50,6 +50,10 @@ def test_hgs2hpc(client: FlaskClient):
     response = client.get("/hgs2hpc?lat=0&lon=0")
     assert response.status_code == 400
 
+    # Test invalid time
+    response = client.get("/hgs2hpc?lat=0&lon=0&event_time=NotATime")
+    assert response.status_code != 500
+
     # Typical request, in this case expect that the hpc x coordinate is 0
     response = client.get("/hgs2hpc?lat=0&lon=0&event_time=2012-01-01 00:00:00")
     assert response.status_code == 200
