@@ -1,5 +1,8 @@
+from typing import Annotated
+
 from flask import Flask, request
-from pydantic import ValidationError
+from pydantic import ValidationError, Field
+
 from hgs2hpc import hgs2hpc
 from normalizer import normalize_hpc
 from validation import AstropyTime, HvBaseModel
@@ -8,7 +11,7 @@ app = Flask("Helioviewer")
 
 
 class Hgs2HpcQueryParameters(HvBaseModel):
-    lat: float
+    lat: float = Field(ge=-90, le=90)
     lon: float
     event_time: AstropyTime
     # Defaults to event_time via constructor if None
@@ -60,5 +63,5 @@ def flask_health_check():
     without exceptions
     """
     normalize_hpc(515, -342, "2012-07-05 13:01:46", "2012-07-05 13:01:46")
-    hgs2hpc(99, 99, "2024-01-01", "2024-01-02")
+    hgs2hpc(9, 9, "2024-01-01", "2024-01-02")
     return "success"
