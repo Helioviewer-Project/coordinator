@@ -34,3 +34,7 @@ def get_helioviewer_frame(obstime: str):
     )
     # Return a new frame with Helioviewer's point of view as the observer
     return Helioprojective(observer=hv_observer, obstime=obstime)
+
+
+def get_3d_frame():
+    return HeliographicStonyhurst(obstime="2025-01-01 00:00:00")
