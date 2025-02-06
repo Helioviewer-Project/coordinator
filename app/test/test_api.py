@@ -135,3 +135,41 @@ def test_gse(client: FlaskClient):
     assert abs(x_au - earth.x.value) < 0.001
     assert abs(y_au - earth.y.value) < 0.001
     assert abs(z_au - earth.z.value) < 0.001
+
+
+def test_gse_errors(client: FlaskClient):
+    """
+    Test error scenarios for gse
+    """
+    # Test missing coordinates parameter
+    response = client.post("/gse2frame", json="This is not json")
+    assert response.status_code == 400
+    result = response.get_json()
+    assert result[0]["msg"] == "Missing coordinates parameter"
+
+    # Test invalid JSON
+    response = client.post(
+        "/gse2frame", data="invalid json", content_type="application/json"
+    )
+    assert response.status_code == 400
+    result = response.get_json()
+    assert result[0]["msg"] == "Received missing or invalid JSON"
+
+    # Test missing required field
+    response = client.post("/gse2frame", json={"coordinates": [{"x": 1, "y": 2}]})
+    assert response.status_code == 400
+    result = response.get_json()
+    assert result[0]["loc"] == ["coordinates", 0, "z"]
+    assert result[0]["msg"] == "Field required"
+
+    # Test invalid field type
+    response = client.post(
+        "/gse2frame", json={"coordinates": [{"x": "not a number", "y": 2, "z": 3}]}
+    )
+    assert response.status_code == 400
+    result = response.get_json()
+    assert result[0]["loc"] == ["coordinates", 0, "x"]
+    assert (
+        result[0]["msg"]
+        == "Input should be a valid number, unable to parse string as a number"
+    )
