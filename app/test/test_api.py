@@ -5,7 +5,7 @@ from astropy import units as u
 from flask.testing import FlaskClient
 from sunpy.coordinates import get_earth
 
-from ..main import app, GSEInput, GSECoordInput
+from ..main import app
 from frames import get_3d_frame_date
 
 

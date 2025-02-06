@@ -87,9 +87,9 @@ def _normalize_gse():
         return {"coordinates": list(coords)}
     except ValidationError as e:
         return e.errors(include_context=False), 400
-    except InvalidJsonError as e:
+    except InvalidJsonError:
         return [{"msg": "Received missing or invalid JSON"}], 400
-    except AssertionError as e:
+    except AssertionError:
         return [{"msg": "Missing coordinates parameter"}], 400
 
 
