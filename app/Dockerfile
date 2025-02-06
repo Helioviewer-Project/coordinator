@@ -16,7 +16,7 @@ ENV PIP=/home/nonroot/.conda/envs/coordinator/bin/pip
 
 # Install dependencies in conda environment
 RUN <<EOF
-mamba create -n coordinator -y python=3.12.3
+mamba create -n coordinator -y python=3.13.1
 $PIP install --no-cache-dir -r requirements.txt
 EOF
 
