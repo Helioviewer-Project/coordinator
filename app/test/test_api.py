@@ -1,7 +1,12 @@
 import json
+
 import pytest
+from astropy import units as u
 from flask.testing import FlaskClient
-from ..main import app
+from sunpy.coordinates import get_earth
+
+from ..main import app, GSEInput, GSECoordInput
+from frames import get_3d_frame_date
 
 
 @pytest.fixture
@@ -92,3 +97,40 @@ def test_hgs2hpc(client: FlaskClient):
 
 def test_healthcheck(client: FlaskClient):
     assert client.get("/flask-health-check").get_data(as_text=True) == "success"
+
+def test_gse(client: FlaskClient):
+    """
+    Tests transforming GSE coordinates into the 3D frame.
+    Test Steps:
+      1. Use SDO position at the 3D frame's point in time.
+      2. Convert that position to the 3D frame via the api
+      3. SDO position should be very similar to earth position in the frame.
+    """
+    frame_date = get_3d_frame_date()
+    date_str = frame_date.strftime("%Y-%m-%d %H:%M:%S")
+    gse_coordinates = {
+        'coordinates': [
+            {
+                # Position of SDO in GSE coordinates from
+                # https://sscweb.gsfc.nasa.gov/WS/sscr/2/locations/sdo/20250101T000000Z,20250101T000200Z/gse/?resolutionFactor=2
+                'x': 16856.9645,
+                'y': 32613.5430,
+                'z': -20740.0146,
+                'time': date_str
+            }
+        ]
+    }
+    response = client.post("/gse2frame", json=gse_coordinates)
+    assert response.status_code == 200
+    data = json.loads(response.get_data())
+
+    # Convert data to AU
+    x_au = data['coordinates'][0]['x'] * u.km.to(u.AU)
+    y_au = data['coordinates'][0]['y'] * u.km.to(u.AU)
+    z_au = data['coordinates'][0]['z'] * u.km.to(u.AU)
+
+    earth = get_earth(frame_date)
+    earth.representation_type = "cartesian"
+    assert abs(x_au - earth.x.value) < 0.001
+    assert abs(y_au - earth.y.value) < 0.001
+    assert abs(z_au - earth.z.value) < 0.001
