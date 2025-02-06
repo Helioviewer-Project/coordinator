@@ -54,3 +54,41 @@ Returns:
 ```
 { x: float, y: float }
 ```
+
+### POST /gse
+
+Transforms a list of GSE coordinates to Heliographic Stonyhurst coordinates using
+a constant frame of reference. The reference frame is the coordinate frame used
+for Heliographic Stonyhurst at 2025-01-01 00:00:00 UTC. All coordinate
+transformations are done using sunpy and assume the sun remains at the origin
+of the system.
+
+```json
+{
+    coordinates: [
+        {
+            x: number in kilometers,
+            y: number in kilometers,
+            z: number in kilometers,
+            time: string (Y-m-d H:M:S)
+        },
+        ...
+    ]
+}
+```
+
+
+Returns the same format, but with the point in the new coordinate frame
+```json
+{
+    coordinates: [
+        {
+            x: number,
+            y: number,
+            z: number,
+            time: string (Y-m-d H:M:S)
+        },
+        ...
+    ]
+}
+```
