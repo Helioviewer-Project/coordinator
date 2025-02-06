@@ -64,3 +64,26 @@ def gse_frame(x: float, y: float, z: float, time: Time) -> SkyCoord:
             "z": coord.z.value,
             "time": str(time),
         }
+
+
+def jsonify_skycoord(coord: SkyCoord) -> list:
+    """
+    Converts the skycoord to a dict in kilometers
+    """
+    with transform_with_sun_center():
+        return list(map(_normalize_skycoord, coord))
+
+
+def _normalize_skycoord(coord: SkyCoord) -> dict:
+    """
+    Converts a skycoord to a normalized x,y,z,time dict.
+    """
+    time = coord.obstime
+    reframed = coord.transform_to(get_3d_frame())
+    reframed.representation_type = "cartesian"
+    return {
+        "x": reframed.x.to("km"),
+        "y": reframed.y.to("km"),
+        "z": reframed.z.to("km"),
+        "time": time,
+    }

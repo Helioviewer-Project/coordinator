@@ -169,7 +169,5 @@ def test_gse_errors(client: FlaskClient):
     assert response.status_code == 400
     result = response.get_json()
     assert result[0]["loc"] == ["coordinates", 0, "x"]
-    assert (
-        result[0]["msg"]
-        == "Input should be a valid number, unable to parse string as a number"
-    )
+    msg = result[0]["msg"]
+    assert msg == "Input should be a valid number, unable to parse string as a number"

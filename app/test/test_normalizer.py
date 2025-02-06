@@ -1,5 +1,9 @@
 import pytest
-from ..normalizer import normalize_hpc
+
+from astropy.time import Time, TimeDelta
+import astropy.units as u
+from ephemeris import get_position
+from ..normalizer import normalize_hpc, jsonify_skycoord
 
 
 def test_normalize():
@@ -20,3 +24,14 @@ def test_off_disk():
     coord = normalize_hpc(-883, -348, "2012-07-05 03:29:06", "2012-07-05 03:29:06")
     assert pytest.approx(coord.Tx.value) == -897.7240
     assert pytest.approx(coord.Ty.value) == -353.8028
+
+
+def test_jsonify_skycoord():
+    # Use ephemeric to get a SkyCoord with multiple coordinates
+    # Get sdo position
+    start = Time("2025-01-01 00:00:00")
+    result = jsonify_skycoord(get_position("sdo", start, Time("2025-01-01 12:00:00")))
+    assert len(result) == 13
+    # Asset there is a coordinate for each time point between start and end.
+    for i, coord in enumerate(result):
+        assert coord["time"] == start + TimeDelta(i * u.hour)
