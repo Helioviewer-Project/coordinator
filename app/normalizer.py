@@ -1,7 +1,11 @@
 from astropy.coordinates import SkyCoord
 from astropy.time import Time
 import astropy.units as u
-from sunpy.coordinates import Helioprojective, transform_with_sun_center, GeocentricSolarEcliptic
+from sunpy.coordinates import (
+    Helioprojective,
+    transform_with_sun_center,
+    GeocentricSolarEcliptic,
+)
 from sunpy.physics.differential_rotation import solar_rotate_coordinate
 from frames import get_helioviewer_frame, get_earth_frame, get_3d_frame
 
@@ -52,8 +56,13 @@ def gse_frame(x: float, y: float, z: float, time: Time) -> SkyCoord:
     """
     with transform_with_sun_center():
         real_coord = GeocentricSolarEcliptic(
-            x * u.km, y * u.km, z * u.km, obstime=time, representation_type='cartesian'
+            x * u.km, y * u.km, z * u.km, obstime=time, representation_type="cartesian"
         )
         coord = real_coord.transform_to(get_3d_frame())
-        coord.representation_type = 'cartesian'
-        return {"x": coord.x.value, "y": coord.y.value, "z": coord.z.value, "time": str(time)}
+        coord.representation_type = "cartesian"
+        return {
+            "x": coord.x.value,
+            "y": coord.y.value,
+            "z": coord.z.value,
+            "time": str(time),
+        }

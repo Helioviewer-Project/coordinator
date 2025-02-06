@@ -10,11 +10,14 @@ from validation import AstropyTime, HvBaseModel
 app = Flask("Helioviewer")
 CORS(app)
 
+
 class InvalidJsonError(Exception):
     pass
 
+
 def raise_json_error(_):
     raise InvalidJsonError
+
 
 class Hgs2HpcQueryParameters(HvBaseModel):
     lat: float = Field(ge=-90, le=90)

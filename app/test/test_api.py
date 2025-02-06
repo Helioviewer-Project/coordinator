@@ -98,6 +98,7 @@ def test_hgs2hpc(client: FlaskClient):
 def test_healthcheck(client: FlaskClient):
     assert client.get("/flask-health-check").get_data(as_text=True) == "success"
 
+
 def test_gse(client: FlaskClient):
     """
     Tests transforming GSE coordinates into the 3D frame.
@@ -109,14 +110,14 @@ def test_gse(client: FlaskClient):
     frame_date = get_3d_frame_date()
     date_str = frame_date.strftime("%Y-%m-%d %H:%M:%S")
     gse_coordinates = {
-        'coordinates': [
+        "coordinates": [
             {
                 # Position of SDO in GSE coordinates from
                 # https://sscweb.gsfc.nasa.gov/WS/sscr/2/locations/sdo/20250101T000000Z,20250101T000200Z/gse/?resolutionFactor=2
-                'x': 16856.9645,
-                'y': 32613.5430,
-                'z': -20740.0146,
-                'time': date_str
+                "x": 16856.9645,
+                "y": 32613.5430,
+                "z": -20740.0146,
+                "time": date_str,
             }
         ]
     }
@@ -125,9 +126,9 @@ def test_gse(client: FlaskClient):
     data = json.loads(response.get_data())
 
     # Convert data to AU
-    x_au = data['coordinates'][0]['x'] * u.km.to(u.AU)
-    y_au = data['coordinates'][0]['y'] * u.km.to(u.AU)
-    z_au = data['coordinates'][0]['z'] * u.km.to(u.AU)
+    x_au = data["coordinates"][0]["x"] * u.km.to(u.AU)
+    y_au = data["coordinates"][0]["y"] * u.km.to(u.AU)
+    z_au = data["coordinates"][0]["z"] * u.km.to(u.AU)
 
     earth = get_earth(frame_date)
     earth.representation_type = "cartesian"
