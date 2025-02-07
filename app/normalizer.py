@@ -10,7 +10,7 @@ from sunpy.physics.differential_rotation import solar_rotate_coordinate
 from frames import get_helioviewer_frame, get_earth_frame, get_3d_frame
 
 
-def normalize_hpc(x: float, y: float, event_time: Time, target: Time) -> SkyCoord:
+def normalize_hpc(x: float, y: float, coord_time: Time, target: Time) -> SkyCoord:
     """
     Accepts a Helioprojective coordinate which is assumed to be measured
     at the given observation time from Earth, and transforms it to
@@ -22,14 +22,14 @@ def normalize_hpc(x: float, y: float, event_time: Time, target: Time) -> SkyCoor
         X coordinate in arcseconds
     y: float
         Y coordinate in arcseconds
-    event_time: Time
+    coord_time: Time
         Observation time of the given coordinates
     target: Time
         Desired time for the new coordinates
     """
     with transform_with_sun_center():
         real_coord = SkyCoord(
-            x * u.arcsecond, y * u.arcsecond, frame=get_earth_frame(event_time)
+            x * u.arcsecond, y * u.arcsecond, frame=get_earth_frame(coord_time)
         )
         hv_frame = get_helioviewer_frame(target)
         with SphericalScreen(hv_frame.observer, only_off_disk=True):
