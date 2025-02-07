@@ -62,7 +62,6 @@ jobs:
 
   # Build and push containers to docker
   docker:
-    # Only build and push containers on version tags
     runs-on: ubuntu-latest
 
     steps:
@@ -94,6 +93,6 @@ jobs:
         # List of tags
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
-        # Push to hub
+        # Only push containers on version tags
         push: ${{ github.event_name == 'push' && github.ref_type == 'tag'}}
 
