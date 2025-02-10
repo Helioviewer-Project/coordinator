@@ -25,4 +25,4 @@ HEALTHCHECK --interval=2s --timeout=2s \
 
 ENTRYPOINT ["/home/nonroot/.conda/envs/coordinator/bin/python"]
 
-CMD ["-m", "gunicorn", "-w", "3", "-t", "60", "-b", "0.0.0.0:80", "main:app"]
+CMD ["-m", "fastapi", "run", "--workers", "4", "main.py"]
