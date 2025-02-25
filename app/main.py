@@ -1,8 +1,8 @@
 from typing import Annotated, List, Union
+
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
-
-from pydantic import ValidationError, Field
+from pydantic import Field
 
 from hgs2hpc import hgs2hpc
 from normalizer import normalize_hpc, gse_frame
@@ -19,6 +19,7 @@ app.add_middleware(
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
+
 
 class Hgs2HpcQueryParameters(HvBaseModel):
     lat: float = Field(ge=-90, le=90)
@@ -43,10 +44,6 @@ def _hgs2hpc(params: Annotated[Hgs2HpcQueryParameters, Query()]):
     #    try:
     coord = hgs2hpc(params.lat, params.lon, params.coord_time, params.target)
     return {"x": coord.Tx.value, "y": coord.Ty.value}
-
-
-#    except ValidationError as e:
-#        return e.errors(include_context=False), 400
 
 
 class NormalizeHpcQueryParameters(HvBaseModel):
