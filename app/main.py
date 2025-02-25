@@ -20,7 +20,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 class Hgs2HpcQueryParameters(HvBaseModel):
     lat: float = Field(ge=-90, le=90)
     lon: float
@@ -64,17 +63,9 @@ class NormalizeHpcQueryParameters(HvBaseModel):
 
 
 @app.get("/hpc", summary="Get HPC coordinate for Helioviewer POV")
-def _normalize_hpc(
-    x: float, y: float, coord_time: str, target: Union[str, None] = None
-):
-    try:
-        params = NormalizeHpcQueryParameters(
-            x=x, y=y, coord_time=coord_time, target=target
-        )
-        coord = normalize_hpc(params.x, params.y, params.coord_time, params.target)
-        return {"x": coord.Tx.value, "y": coord.Ty.value}
-    except ValidationError as e:
-        return e.errors(include_context=False), 400
+def _normalize_hpc(params: Annotated[NormalizeHpcQueryParameters, Query()]):
+    coord = normalize_hpc(params.x, params.y, params.coord_time, params.target)
+    return {"x": coord.Tx.value, "y": coord.Ty.value}
 
 
 class GSECoordInput(HvBaseModel):
