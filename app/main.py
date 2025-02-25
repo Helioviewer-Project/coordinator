@@ -1,5 +1,6 @@
 from typing import Annotated, List, Union
 from fastapi import FastAPI, Query
+from fastapi.middleware.cors import CORSMiddleware
 
 from pydantic import ValidationError, Field
 
@@ -8,6 +9,16 @@ from normalizer import normalize_hpc, gse_frame
 from validation import AstropyTime, HvBaseModel
 
 app = FastAPI()
+
+origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["*"],
+)
 
 
 class Hgs2HpcQueryParameters(HvBaseModel):
