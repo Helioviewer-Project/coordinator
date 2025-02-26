@@ -51,7 +51,7 @@ class NormalizeHpcQueryParameters(HvBaseModel):
     y: float
     coord_time: AstropyTime
     # Defaults to coord_time via constructor if None
-    target: Union[AstropyTime, None]
+    target: Union[AstropyTime, None] = None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
