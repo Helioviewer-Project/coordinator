@@ -20,7 +20,7 @@ mamba create -n coordinator -y python=3.13.1
 $PIP install --no-cache-dir -r requirements.txt
 EOF
 
-HEALTHCHECK --interval=2s --timeout=2s \
+HEALTHCHECK --interval=2s --timeout=10s \
     CMD curl --silent --fail "http://127.0.0.1/health-check"
 
 ENTRYPOINT ["/home/nonroot/.conda/envs/coordinator/bin/python"]
