@@ -5,7 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import Field
 
 from hgs2hpc import hgs2hpc
-from normalizer import normalize_hpc, gse_frame
+from normalizer import normalize_hpc, gse_frame, jsonify_skycoord
+from ephemeris import get_position
 from validation import AstropyTime, HvBaseModel
 
 app = FastAPI()
@@ -80,6 +81,16 @@ class GSEInput(HvBaseModel):
 def _normalize_gse(params: GSEInput):
     coords = map(lambda c: gse_frame(c.x, c.y, c.z, c.time), params.coordinates)
     return {"coordinates": list(coords)}
+
+
+class PositionInput(HvBaseModel):
+    start: AstropyTime
+    stop: AstropyTime
+
+
+@app.get("/position/{observatory}")
+def _get_position(observatory: str, start: AstropyTime, stop: AstropyTime):
+    return {"coordinates": jsonify_skycoord(get_position(observatory, start, stop))}
 
 
 @app.get("/health-check", include_in_schema=False)
