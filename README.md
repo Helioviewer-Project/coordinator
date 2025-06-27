@@ -65,12 +65,12 @@ of the system.
 
 ```json
 {
-    coordinates: [
+    "coordinates": [
         {
-            x: number in kilometers,
-            y: number in kilometers,
-            z: number in kilometers,
-            time: string (Y-m-d H:M:S)
+            "x": number in kilometers,
+            "y": number in kilometers,
+            "z": number in kilometers,
+            "time": string (Y-m-d H:M:S)
         },
         ...
     ]
@@ -81,12 +81,12 @@ of the system.
 Returns the same format, but with the point in the new coordinate frame
 ```json
 {
-    coordinates: [
+    "coordinates": [
         {
-            x: number,
-            y: number,
-            z: number,
-            time: string (Y-m-d H:M:S)
+            "x": number,
+            "y": number,
+            "z": number,
+            "time: string (Y-m-d H:M:S)
         },
         ...
     ]
