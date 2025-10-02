@@ -16,7 +16,7 @@ docker run --rm -t dgarciabriseno/hv-coordinator
 Running manually with python
 ```
 pip install -r requirements.txt
-python -m flask --app main run
+python -m fastapi run main.py
 ```
 
 ## Routes
