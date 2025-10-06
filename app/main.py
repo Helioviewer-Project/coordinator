@@ -47,6 +47,31 @@ def _hgs2hpc(params: Annotated[Hgs2HpcQueryParameters, Query()]):
     return {"x": coord.Tx.value, "y": coord.Ty.value}
 
 
+class Hgs2HpcCoordInput(HvBaseModel):
+    lat: float = Field(ge=-90, le=90)
+    lon: float
+    coord_time: AstropyTime
+
+
+class Hgs2HpcBatchInput(HvBaseModel):
+    coordinates: List[Hgs2HpcCoordInput]
+    target: AstropyTime
+
+
+@app.post(
+    "/hgs2hpc",
+    summary="Convert Heliographic Stonyhurst coordinate to Helioprojective coordinate in Helioviewer's POV",
+)
+def _hgs2hpc_post(params: Hgs2HpcBatchInput):
+    "Convert a latitude/longitude coordinate to the equivalent helioprojective coordinate at the given target time"
+    coords = map(
+        lambda c: hgs2hpc(c.lat, c.lon, c.coord_time, params.target), params.coordinates
+    )
+    return {
+        "coordinates": [{"x": coord.Tx.value, "y": coord.Ty.value} for coord in coords]
+    }
+
+
 class NormalizeHpcQueryParameters(HvBaseModel):
     x: float
     y: float
