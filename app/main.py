@@ -1,8 +1,8 @@
 from typing import Annotated, List, Union
 
-from fastapi import FastAPI, Query, Response
+from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import Field, ValidationError
+from pydantic import Field
 
 from hgs2hpc import hgs2hpc
 from normalizer import normalize_hpc, gse_frame, jsonify_skycoord
