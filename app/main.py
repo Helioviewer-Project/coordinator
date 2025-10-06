@@ -65,10 +65,11 @@ class Hgs2HpcBatchInput(HvBaseModel):
 def _hgs2hpc_post(params: Hgs2HpcBatchInput):
     "Convert a latitude/longitude coordinate to the equivalent helioprojective coordinate at the given target time"
     coords = map(
-        lambda c: hgs2hpc(c.lat, c.lon, c.coord_time, params.target),
-        params.coordinates
+        lambda c: hgs2hpc(c.lat, c.lon, c.coord_time, params.target), params.coordinates
     )
-    return {"coordinates": [{"x": coord.Tx.value, "y": coord.Ty.value} for coord in coords]}
+    return {
+        "coordinates": [{"x": coord.Tx.value, "y": coord.Ty.value} for coord in coords]
+    }
 
 
 class NormalizeHpcQueryParameters(HvBaseModel):

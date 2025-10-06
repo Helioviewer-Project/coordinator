@@ -171,9 +171,7 @@ def test_hgs2hpc_post(client: TestClient):
 
     # Test invalid time format
     batch_data = {
-        "coordinates": [
-            {"lat": 0.0, "lon": 0.0, "coord_time": "NotAValidTime"}
-        ],
+        "coordinates": [{"lat": 0.0, "lon": 0.0, "coord_time": "NotAValidTime"}],
         "target": "2012-01-01T00:00:00Z",
     }
     response = client.post("/hgs2hpc", json=batch_data)
