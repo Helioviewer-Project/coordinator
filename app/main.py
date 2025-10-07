@@ -4,7 +4,7 @@ from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import Field
 
-from hgs2hpc import hgs2hpc
+from hgs2hpc import hgs2hpc, hgs2hpc_batch
 from normalizer import normalize_hpc, gse_frame, jsonify_skycoord
 from ephemeris import get_position
 from validation import AstropyTime, HvBaseModel
@@ -64,12 +64,15 @@ class Hgs2HpcBatchInput(HvBaseModel):
 )
 def _hgs2hpc_post(params: Hgs2HpcBatchInput):
     "Convert a latitude/longitude coordinate to the equivalent helioprojective coordinate at the given target time"
-    coords = map(
-        lambda c: hgs2hpc(c.lat, c.lon, c.coord_time, params.target), params.coordinates
-    )
-    return {
-        "coordinates": [{"x": coord.Tx.value, "y": coord.Ty.value} for coord in coords]
-    }
+    # Prepare coordinates for batch processing
+    coords_input = [
+        {"lat": c.lat, "lon": c.lon, "coord_time": c.coord_time}
+        for c in params.coordinates
+    ]
+
+    results = hgs2hpc_batch(coords_input, params.target)
+
+    return {"coordinates": results}
 
 
 class NormalizeHpcQueryParameters(HvBaseModel):
