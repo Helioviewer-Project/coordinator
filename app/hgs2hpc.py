@@ -3,7 +3,6 @@ from astropy.time import Time
 import astropy.units as u
 from sunpy.coordinates import frames, transform_with_sun_center
 from sunpy.physics.differential_rotation import solar_rotate_coordinate
-from collections import defaultdict
 from typing import List, Dict
 
 from frames import get_helioviewer_frame, get_earth_frame
