@@ -66,11 +66,7 @@ def _hgs2hpc_post(params: Hgs2HpcBatchInput):
     "Convert a latitude/longitude coordinate to the equivalent helioprojective coordinate at the given target time"
     # Prepare coordinates for batch processing
     coords_input = [
-        {
-            'lat': c.lat,
-            'lon': c.lon,
-            'coord_time': c.coord_time
-        }
+        {"lat": c.lat, "lon": c.lon, "coord_time": c.coord_time}
         for c in params.coordinates
     ]
 

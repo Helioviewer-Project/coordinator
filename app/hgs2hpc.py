@@ -65,22 +65,24 @@ def hgs2hpc_batch(coordinates: List[Dict], target: Time) -> List[Dict]:
     # Group coordinates by coord_time for batch processing
     groups = defaultdict(list)
     for idx, coord in enumerate(coordinates):
-        coord_time_str = str(coord['coord_time'])
-        groups[coord_time_str].append({
-            'idx': idx,
-            'lat': coord['lat'],
-            'lon': coord['lon'],
-            'coord_time': coord['coord_time']
-        })
+        coord_time_str = str(coord["coord_time"])
+        groups[coord_time_str].append(
+            {
+                "idx": idx,
+                "lat": coord["lat"],
+                "lon": coord["lon"],
+                "coord_time": coord["coord_time"],
+            }
+        )
 
     results = [None] * len(coordinates)
 
     with transform_with_sun_center():
         for coord_time_str, group in groups.items():
             # Extract arrays of lat/lon for this group
-            lats = [c['lat'] for c in group]
-            lons = [c['lon'] for c in group]
-            coord_time = group[0]['coord_time']
+            lats = [c["lat"] for c in group]
+            lons = [c["lon"] for c in group]
+            coord_time = group[0]["coord_time"]
 
             # Get earth frame for this coord_time
             earth_frame = get_earth_frame(coord_time)
@@ -100,9 +102,17 @@ def hgs2hpc_batch(coordinates: List[Dict], target: Time) -> List[Dict]:
 
             # Extract results and place them in correct order
             for i, item in enumerate(group):
-                results[item['idx']] = {
-                    'x': rotated.Tx.value[i] if hasattr(rotated.Tx.value, '__iter__') else rotated.Tx.value,
-                    'y': rotated.Ty.value[i] if hasattr(rotated.Ty.value, '__iter__') else rotated.Ty.value
+                results[item["idx"]] = {
+                    "x": (
+                        rotated.Tx.value[i]
+                        if hasattr(rotated.Tx.value, "__iter__")
+                        else rotated.Tx.value
+                    ),
+                    "y": (
+                        rotated.Ty.value[i]
+                        if hasattr(rotated.Ty.value, "__iter__")
+                        else rotated.Ty.value
+                    ),
                 }
 
     return results
