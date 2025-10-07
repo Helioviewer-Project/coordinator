@@ -57,6 +57,9 @@ def hgs2hpc_batch(coordinates: List[Dict], target: Time) -> List[Dict]:
     List[Dict]
         List of results with keys: x, y
     """
+    if not coordinates:
+        return []
+
     hv_frame = get_helioviewer_frame(target)
 
     with transform_with_sun_center():
