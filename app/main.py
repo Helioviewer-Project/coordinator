@@ -109,8 +109,7 @@ class HpcBatchInput(HvBaseModel):
 def _normalize_hpc_post(params: HpcBatchInput):
     "Normalize multiple HPC coordinates to Helioviewer's POV at the given target time"
     coords_input = [
-        {"x": c.x, "y": c.y, "coord_time": c.coord_time}
-        for c in params.coordinates
+        {"x": c.x, "y": c.y, "coord_time": c.coord_time} for c in params.coordinates
     ]
 
     results = normalize_hpc_batch(coords_input, params.target)
