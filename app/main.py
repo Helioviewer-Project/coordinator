@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import Field
 
 from hgs2hpc import hgs2hpc, hgs2hpc_batch
-from normalizer import normalize_hpc, gse_frame, jsonify_skycoord
+from normalizer import normalize_hpc, normalize_hpc_batch, gse_frame, jsonify_skycoord
 from ephemeris import get_position
 from validation import AstropyTime, HvBaseModel
 
@@ -92,6 +92,30 @@ class NormalizeHpcQueryParameters(HvBaseModel):
 def _normalize_hpc(params: Annotated[NormalizeHpcQueryParameters, Query()]):
     coord = normalize_hpc(params.x, params.y, params.coord_time, params.target)
     return {"x": coord.Tx.value, "y": coord.Ty.value}
+
+
+class HpcCoordInput(HvBaseModel):
+    x: float
+    y: float
+    coord_time: AstropyTime
+
+
+class HpcBatchInput(HvBaseModel):
+    coordinates: List[HpcCoordInput]
+    target: AstropyTime
+
+
+@app.post("/hpc", summary="Batch normalize HPC coordinates for Helioviewer POV")
+def _normalize_hpc_post(params: HpcBatchInput):
+    "Normalize multiple HPC coordinates to Helioviewer's POV at the given target time"
+    coords_input = [
+        {"x": c.x, "y": c.y, "coord_time": c.coord_time}
+        for c in params.coordinates
+    ]
+
+    results = normalize_hpc_batch(coords_input, params.target)
+
+    return {"coordinates": results}
 
 
 class GSECoordInput(HvBaseModel):
