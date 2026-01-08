@@ -1,4 +1,6 @@
 import pytest
+import random
+import math
 from astropy import units as u
 from fastapi.testclient import TestClient
 from sunpy.coordinates import get_earth
@@ -145,6 +147,75 @@ def test_hpc_post(client: TestClient):
     individual_coord = individual_response.json()
     assert pytest.approx(batch_coord["x"], abs=1e-10) == individual_coord["x"]
     assert pytest.approx(batch_coord["y"], abs=1e-10) == individual_coord["y"]
+
+
+def test_hpc_single_vs_batched(client: TestClient):
+    """
+    Test that processing 100 random coordinates one-by-one gives the same
+    results as processing them all at once with the batch endpoint.
+    """
+    # Generate 100 random coordinates
+    num_coords = 100
+    random.seed(42)  # For reproducibility
+
+    # Set a common target time
+    target = "2020-01-01T00:00:00"
+
+    coordinates = []
+    for _ in range(num_coords):
+        x = random.uniform(-1000, 1000)
+        y = random.uniform(-1000, 1000)
+        # Use coord_time within 24 hours before target time
+        hours_before = random.uniform(0, 24)
+        from datetime import datetime, timedelta
+
+        target_dt = datetime.fromisoformat(target)
+        coord_dt = target_dt - timedelta(hours=hours_before)
+        coord_time = coord_dt.strftime("%Y-%m-%dT%H:%M:%S")
+
+        coordinates.append({"x": x, "y": y, "coord_time": coord_time})
+
+    # Process each coordinate individually using GET
+    individual_results = []
+    for i, coord in enumerate(coordinates):
+        response = client.get(
+            f"/hpc?x={coord['x']}&y={coord['y']}&coord_time={coord['coord_time']}&target={target}"
+        )
+        assert response.status_code == 200
+        result = response.json()
+        # Check for NaN values
+        assert not math.isnan(
+            result["x"]
+        ), f"Individual request {i} returned NaN for x (input: {coord})"
+        assert not math.isnan(
+            result["y"]
+        ), f"Individual request {i} returned NaN for y (input: {coord})"
+        individual_results.append(result)
+
+    # Process all coordinates at once using POST
+    batch_data = {"coordinates": coordinates, "target": target}
+    batch_response = client.post("/hpc", json=batch_data)
+    assert batch_response.status_code == 200
+    batch_results = batch_response.json()["coordinates"]
+
+    # Compare results
+    assert len(individual_results) == len(batch_results)
+    for i, (individual, batched) in enumerate(zip(individual_results, batch_results)):
+        # Check batch results for NaN
+        assert not math.isnan(
+            batched["x"]
+        ), f"Batch result {i} returned NaN for x (input: {coordinates[i]})"
+        assert not math.isnan(
+            batched["y"]
+        ), f"Batch result {i} returned NaN for y (input: {coordinates[i]})"
+
+        # Compare individual vs batch results
+        assert (
+            pytest.approx(individual["x"], abs=1e-10) == batched["x"]
+        ), f"Mismatch at index {i}: x values differ"
+        assert (
+            pytest.approx(individual["y"], abs=1e-10) == batched["y"]
+        ), f"Mismatch at index {i}: y values differ"
 
 
 def test_hgs2hpc(client: TestClient):
