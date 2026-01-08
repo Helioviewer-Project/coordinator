@@ -32,9 +32,7 @@ def normalize_hpc(x: float, y: float, coord_time: Time, target: Time) -> SkyCoor
         earth_frame = get_earth_frame(coord_time)
         hv_frame = get_helioviewer_frame(target)
         with SphericalScreen(earth_frame.observer, only_off_disk=True):
-            real_coord = SkyCoord(
-                x * u.arcsecond, y * u.arcsecond, frame=earth_frame
-            )
+            real_coord = SkyCoord(x * u.arcsecond, y * u.arcsecond, frame=earth_frame)
             return solar_rotate_coordinate(real_coord, hv_frame.observer)
 
 

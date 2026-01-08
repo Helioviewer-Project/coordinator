@@ -168,6 +168,7 @@ def test_hpc_single_vs_batched(client: TestClient):
         # Use coord_time within 24 hours before target time
         hours_before = random.uniform(0, 24)
         from datetime import datetime, timedelta
+
         target_dt = datetime.fromisoformat(target)
         coord_dt = target_dt - timedelta(hours=hours_before)
         coord_time = coord_dt.strftime("%Y-%m-%dT%H:%M:%S")
@@ -183,10 +184,12 @@ def test_hpc_single_vs_batched(client: TestClient):
         assert response.status_code == 200
         result = response.json()
         # Check for NaN values
-        assert not math.isnan(result["x"]), \
-            f"Individual request {i} returned NaN for x (input: {coord})"
-        assert not math.isnan(result["y"]), \
-            f"Individual request {i} returned NaN for y (input: {coord})"
+        assert not math.isnan(
+            result["x"]
+        ), f"Individual request {i} returned NaN for x (input: {coord})"
+        assert not math.isnan(
+            result["y"]
+        ), f"Individual request {i} returned NaN for y (input: {coord})"
         individual_results.append(result)
 
     # Process all coordinates at once using POST
@@ -199,16 +202,20 @@ def test_hpc_single_vs_batched(client: TestClient):
     assert len(individual_results) == len(batch_results)
     for i, (individual, batched) in enumerate(zip(individual_results, batch_results)):
         # Check batch results for NaN
-        assert not math.isnan(batched["x"]), \
-            f"Batch result {i} returned NaN for x (input: {coordinates[i]})"
-        assert not math.isnan(batched["y"]), \
-            f"Batch result {i} returned NaN for y (input: {coordinates[i]})"
+        assert not math.isnan(
+            batched["x"]
+        ), f"Batch result {i} returned NaN for x (input: {coordinates[i]})"
+        assert not math.isnan(
+            batched["y"]
+        ), f"Batch result {i} returned NaN for y (input: {coordinates[i]})"
 
         # Compare individual vs batch results
-        assert pytest.approx(individual["x"], abs=1e-10) == batched["x"], \
-            f"Mismatch at index {i}: x values differ"
-        assert pytest.approx(individual["y"], abs=1e-10) == batched["y"], \
-            f"Mismatch at index {i}: y values differ"
+        assert (
+            pytest.approx(individual["x"], abs=1e-10) == batched["x"]
+        ), f"Mismatch at index {i}: x values differ"
+        assert (
+            pytest.approx(individual["y"], abs=1e-10) == batched["y"]
+        ), f"Mismatch at index {i}: y values differ"
 
 
 def test_hgs2hpc(client: TestClient):
