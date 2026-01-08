@@ -154,6 +154,5 @@ def health_check():
     normalize_hpc(515, -342, "2012-07-05 13:01:46", "2012-07-05 13:01:46")
     hgs2hpc(9, 9, "2024-01-01", "2024-01-02")
     gse_frame(0, 0, 0, "2024-01-02")
-def _get_position(observatory: str, start: AstropyTime, stop: AstropyTime):
     jsonify_skycoord(get_position("SDO", Time("2025-01-01"), Time("2025-01-01")))
     return "success"
