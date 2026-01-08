@@ -1,5 +1,6 @@
 from typing import Annotated, List, Union
 
+from astropy.time import Time
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import Field
@@ -153,4 +154,5 @@ def health_check():
     normalize_hpc(515, -342, "2012-07-05 13:01:46", "2012-07-05 13:01:46")
     hgs2hpc(9, 9, "2024-01-01", "2024-01-02")
     gse_frame(0, 0, 0, "2024-01-02")
+    jsonify_skycoord(get_position("SDO", Time("2025-01-01"), Time("2025-01-01")))
     return "success"
