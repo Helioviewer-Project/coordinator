@@ -37,8 +37,6 @@ def normalize_hpc(x: float, y: float, coord_time: Time, target: Time) -> SkyCoor
             return solar_rotate_coordinate(real_coord, hv_frame.observer)
 
 
-<<<<<<< Updated upstream
-=======
 def normalize_hpc_batch(coordinates: List[Dict], target: Time) -> List[Dict]:
     """
     Batch process multiple HPC coordinate normalizations
@@ -76,7 +74,6 @@ def normalize_hpc_batch(coordinates: List[Dict], target: Time) -> List[Dict]:
     return [{"x": c.Tx.value.item(), "y": c.Ty.value.item()} for c in result]
 
 
->>>>>>> Stashed changes
 def skycoord_to_3dframe(coord: SkyCoord) -> SkyCoord:
     """
     Accepts a SkyCoord and transforms it to

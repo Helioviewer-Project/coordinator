@@ -49,8 +49,6 @@ def test_hpc(client: TestClient):
     assert 9 < coord["x"] and coord["x"] < 10
 
 
-<<<<<<< Updated upstream
-=======
 def test_hpc_post(client: TestClient):
     """
     Test POST /hpc endpoint with batch coordinate normalization
@@ -213,7 +211,6 @@ def test_hpc_single_vs_batched(client: TestClient):
             f"Mismatch at index {i}: y values differ"
 
 
->>>>>>> Stashed changes
 def test_hgs2hpc(client: TestClient):
     # Missing lat
     response = client.get("/hgs2hpc?lon=0&coord_time=2012-01-01")
