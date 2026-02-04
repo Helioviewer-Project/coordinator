@@ -28,34 +28,6 @@ jobs:
       run: black --check .
 
 
-  # Run python tests
-  test:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Set up Python 3.13.1
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.13.1"
-    - name: Install dependencies
-      run: |
-        cd app
-        python -m pip install --upgrade pip
-        pip install pytest coverage
-        pip install -r requirements.txt
-    - name: Run pytest
-      run: cd app && coverage run -m pytest .
-    - name: Create code coverage report
-      run: cd app && coverage html
-    - name: Upload coverage report
-      uses: actions/upload-artifact@v4
-      with:
-        name: coverage
-        path: app/htmlcov
-        retention-days: 30
-
-
   # Build Docker image and save as artifact
   docker:
     runs-on: ubuntu-latest
@@ -101,9 +73,8 @@ jobs:
       run: docker load -i /tmp/docker-image.tar
     - name: Run tests in container
       run: |
-        docker run --rm \
+        docker run --name test-container \
           --entrypoint sh \
-          -v $(pwd)/coverage-output:/tmp/htmlcov \
           -e COVERAGE_FILE=/tmp/.coverage \
           hv-coordinator:buildtest \
           -c "
@@ -111,6 +82,10 @@ jobs:
             mamba run -n coordinator python -m coverage run -m pytest .
             mamba run -n coordinator python -m coverage html -d /tmp/htmlcov
           "
+    - name: Copy coverage report from container
+      run: docker cp test-container:/tmp/htmlcov ./coverage-output
+    - name: Remove container
+      run: docker rm test-container
     - name: Upload coverage report
       uses: actions/upload-artifact@v4
       with:
