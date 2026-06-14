@@ -51,8 +51,8 @@ shell: .env ## Open a bash shell in the container
 format: .env ## Format code with black
 	$(DOCKER_COMPOSE) run --rm app -m black .
 
-lint: .env ## Check code style with black and flake8
+lint: .env ## Check code style with flake8 and black
+	$(DOCKER_COMPOSE) run --rm app -m flake8 --ignore=E501
 	$(DOCKER_COMPOSE) run --rm app -m black --check .
-	$(DOCKER_COMPOSE) run --rm app -m flake8 --exclude=test .
 
 check: lint test ## Run all checks (lint + test)

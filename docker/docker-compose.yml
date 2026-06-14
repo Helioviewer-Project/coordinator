@@ -4,6 +4,8 @@ services:
   app:
     build:
       context: ../app
+      args:
+        FASTAPI_ENV: ${FASTAPI_ENV:-development}
     user: "${UID}:${GID}"
     volumes:
       - ../app:/home/nonroot/app
