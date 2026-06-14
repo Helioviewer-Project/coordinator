@@ -1,14 +1,17 @@
+name: coordinator
+
 services:
   app:
-    build: .
+    build:
+      context: ../app
     user: "${UID}:${GID}"
     volumes:
-      - .:/home/nonroot/app
+      - ../app:/home/nonroot/app
     environment:
       - FASTAPI_ENV=${FASTAPI_ENV:-development}
       - PYTHONPATH=/home/nonroot/app
       # nginx-proxy + acme-companion (Let's Encrypt) routing.
-      # Values come from app/.env (copy app/.env.example to app/.env).
+      # Values come from .env at the repo root (copy .env.example to .env).
       # Same convention as the events-api compose.
       - VIRTUAL_HOST=${VIRTUAL_HOST}
       - VIRTUAL_PORT=${VIRTUAL_PORT:-80}
