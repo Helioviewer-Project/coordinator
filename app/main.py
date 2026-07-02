@@ -3,12 +3,13 @@ from typing import Annotated, List, Union
 from astropy.time import Time
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 from hgs2hpc import hgs2hpc, hgs2hpc_batch
+from hgc2hpc import hgc2hpc, hgc2hpc_batch
 from normalizer import normalize_hpc, normalize_hpc_batch, gse_frame, jsonify_skycoord
 from ephemeris import get_position
-from validation import AstropyTime, HvBaseModel
+from validation import AstropyTime, HvBaseModel, SunpyObserver, VALID_OBSERVERS
 
 app = FastAPI()
 
@@ -72,6 +73,84 @@ def _hgs2hpc_post(params: Hgs2HpcBatchInput):
     ]
 
     results = hgs2hpc_batch(coords_input, params.target)
+
+    return {"coordinates": results}
+
+
+_OBSERVER_DESC = (
+    "Solar-system body the Carrington coordinate is observed from "
+    "(case-insensitive). Defaults to earth. Must be one of: "
+    f"{', '.join(VALID_OBSERVERS)}. Any other value returns HTTP 422."
+)
+
+
+class Hgc2HpcQueryParameters(HvBaseModel):
+    lat: float = Field(ge=-90, le=90)
+    lon: float
+    coord_time: AstropyTime
+    observer: SunpyObserver = Field(default="earth", description=_OBSERVER_DESC)
+    # Defaults to coord_time via constructor if None
+    target: Union[AstropyTime, None] = None
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.target is None:
+            self.target = self.coord_time
+
+
+@app.get(
+    "/hgc2hpc",
+    summary="Convert Heliographic Carrington coordinate to Helioprojective coordinate in Helioviewer's POV",
+)
+def _hgc2hpc(params: Annotated[Hgc2HpcQueryParameters, Query()]):
+    "Convert a Carrington latitude/longitude coordinate to the equivalent helioprojective coordinate at the given target time"
+    coord = hgc2hpc(
+        params.lat, params.lon, params.coord_time, params.target, params.observer
+    )
+    return {"x": coord.Tx.value, "y": coord.Ty.value}
+
+
+class Hgc2HpcCoordInput(HvBaseModel):
+    lat: float = Field(ge=-90, le=90)
+    lon: float
+    coord_time: AstropyTime
+
+
+class Hgc2HpcBatchInput(HvBaseModel):
+    coordinates: List[Hgc2HpcCoordInput] = Field(
+        description="One or more Carrington coordinates to convert."
+    )
+    target: AstropyTime
+    # One observer applied to every coordinate in the batch; defaults to earth
+    observer: SunpyObserver = Field(default="earth", description=_OBSERVER_DESC)
+
+    model_config = ConfigDict(
+        extra="forbid",
+        json_schema_extra={
+            "example": {
+                "coordinates": [
+                    {"lat": 0, "lon": 117.7, "coord_time": "2012-01-01 00:00:00"},
+                    {"lat": 10, "lon": 20, "coord_time": "2013-06-01 00:00:00"},
+                ],
+                "target": "2024-01-02 00:00:00",
+                "observer": "earth",
+            }
+        },
+    )
+
+
+@app.post(
+    "/hgc2hpc",
+    summary="Convert Heliographic Carrington coordinate to Helioprojective coordinate in Helioviewer's POV",
+)
+def _hgc2hpc_post(params: Hgc2HpcBatchInput):
+    "Convert Carrington latitude/longitude coordinates to the equivalent helioprojective coordinates at the given target time"
+    coords_input = [
+        {"lat": c.lat, "lon": c.lon, "coord_time": c.coord_time}
+        for c in params.coordinates
+    ]
+
+    results = hgc2hpc_batch(coords_input, params.target, params.observer)
 
     return {"coordinates": results}
 
@@ -153,6 +232,7 @@ def health_check():
     """
     normalize_hpc(515, -342, "2012-07-05 13:01:46", "2012-07-05 13:01:46")
     hgs2hpc(9, 9, "2024-01-01", "2024-01-02")
+    hgc2hpc(9, 9, "2024-01-01", "2024-01-02")
     gse_frame(0, 0, 0, "2024-01-02")
     jsonify_skycoord(get_position("SDO", Time("2025-01-01"), Time("2025-01-01")))
     return "success"

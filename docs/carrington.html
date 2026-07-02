@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coordinator API — Carrington endpoints</title>
+<style>
+  :root {
+    --fg: #1f2328; --muted: #57606a; --line: #d0d7de; --bg: #ffffff;
+    --code-bg: #f6f8fa; --get: #1a7f37; --post: #0969da; --accent: #6639ba;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; color: var(--fg); background: var(--bg);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 40px 24px 80px; }
+  header { border-bottom: 1px solid var(--line); padding-bottom: 20px; margin-bottom: 32px; }
+  h1 { margin: 0 0 6px; font-size: 28px; }
+  h2 { margin: 40px 0 12px; font-size: 22px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+  h3 { margin: 24px 0 8px; font-size: 16px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .sub { color: var(--muted); margin: 0; }
+  code, pre, .path { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  code { background: var(--code-bg); padding: 1px 5px; border-radius: 5px; font-size: .9em; }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px;
+    padding: 14px 16px; overflow-x: auto; font-size: 13.5px; line-height: 1.5;
+  }
+  pre code { background: none; padding: 0; }
+  .endpoint {
+    border: 1px solid var(--line); border-radius: 10px; padding: 0; margin: 22px 0; overflow: hidden;
+  }
+  .endpoint > .head {
+    display: flex; align-items: center; gap: 12px; padding: 14px 18px;
+    background: var(--code-bg); border-bottom: 1px solid var(--line);
+  }
+  .badge {
+    font-family: ui-monospace, monospace; font-weight: 700; font-size: 13px;
+    color: #fff; padding: 3px 10px; border-radius: 6px; letter-spacing: .03em;
+  }
+  .badge.get { background: var(--get); }
+  .badge.post { background: var(--post); }
+  .path { font-size: 16px; font-weight: 600; }
+  .endpoint > .body { padding: 6px 18px 18px; }
+  table { border-collapse: collapse; width: 100%; margin: 8px 0 4px; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; }
+  td.name { font-family: ui-monospace, monospace; white-space: nowrap; }
+  .req { color: var(--post); font-weight: 600; font-size: 12px; }
+  .opt { color: var(--muted); font-size: 12px; }
+  .note { background: #f6f3ff; border: 1px solid #e0d7fb; border-left: 3px solid var(--accent);
+          border-radius: 6px; padding: 12px 16px; margin: 16px 0; }
+  .note strong { color: var(--accent); }
+  .pill { display: inline-block; background: var(--code-bg); border: 1px solid var(--line);
+          border-radius: 999px; padding: 2px 10px; font-family: ui-monospace, monospace;
+          font-size: 12.5px; margin: 2px 4px 2px 0; }
+  footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line);
+           color: var(--muted); font-size: 13px; }
+  a { color: var(--post); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Coordinator API — Carrington endpoints</h1>
+  <p class="sub">Convert <strong>Heliographic Carrington</strong> coordinates to <strong>Helioprojective</strong> coordinates in Helioviewer's point of view.</p>
+</header>
+
+<p>
+  A Carrington coordinate (latitude, Carrington longitude) names a point fixed to the
+  Sun's rotating surface. These endpoints turn such a point into the
+  <code>(x, y)</code> Helioprojective coordinate &mdash; arcseconds on the plane of the
+  sky &mdash; as it would appear from Helioviewer's vantage point.
+</p>
+
+<h3>Two times, one job each</h3>
+<table>
+  <tr><th>Field</th><th>Meaning</th></tr>
+  <tr><td class="name">coord_time</td><td>When the lat/lon was <em>measured</em>. Fixes the Sun's orientation to start from.</td></tr>
+  <tr><td class="name">target</td><td>The time you want the result <em>for</em>. Solar differential rotation is applied from <code>coord_time</code> to <code>target</code>. If equal to <code>coord_time</code> (or omitted on GET), no rotation is applied &mdash; just a frame conversion.</td></tr>
+</table>
+
+<div class="note">
+  <strong>Why an observer?</strong> Carrington longitude is <em>apparent</em>: it folds in the
+  light-travel time from the Sun to the observer (~0.08&deg; of solar rotation for Earth).
+  sunpy therefore requires an observer to transform out of the frame. The
+  <code>observer</code> defaults to <code>earth</code> &mdash; matching the convention of
+  Carrington coordinates in solar data products (NOAA active regions, HMI synoptic maps)
+  &mdash; but may be any solar-system body sunpy can resolve.
+</div>
+
+<h3>Valid observer values</h3>
+<p>
+  <span class="pill">earth</span><span class="pill">sun</span><span class="pill">moon</span>
+  <span class="pill">mercury</span><span class="pill">venus</span>
+  <span class="pill">earth-moon-barycenter</span><span class="pill">mars</span>
+  <span class="pill">jupiter</span><span class="pill">saturn</span>
+  <span class="pill">uranus</span><span class="pill">neptune</span>
+</p>
+<p class="sub">Case-insensitive. Any other value returns <code>HTTP 422</code>.</p>
+
+<!-- ============================ GET ============================ -->
+<h2>Endpoints</h2>
+
+<div class="endpoint">
+  <div class="head">
+    <span class="badge get">GET</span>
+    <span class="path">/hgc2hpc</span>
+  </div>
+  <div class="body">
+    <p>Convert a single Carrington coordinate to a Helioprojective coordinate.</p>
+
+    <h3>Query parameters</h3>
+    <table>
+      <tr><th>Name</th><th>Type</th><th>Description</th></tr>
+      <tr><td class="name">lat</td><td>float</td><td><span class="req">required</span> &mdash; latitude in degrees, <code>-90 &le; lat &le; 90</code>.</td></tr>
+      <tr><td class="name">lon</td><td>float</td><td><span class="req">required</span> &mdash; Carrington longitude in degrees.</td></tr>
+      <tr><td class="name">coord_time</td><td>string</td><td><span class="req">required</span> &mdash; time the coordinate was measured (any sunpy-parseable time).</td></tr>
+      <tr><td class="name">target</td><td>string</td><td><span class="opt">optional</span> &mdash; desired observation time. Applies differential rotation. Defaults to <code>coord_time</code>.</td></tr>
+      <tr><td class="name">observer</td><td>string</td><td><span class="opt">optional</span> &mdash; solar-system body the coordinate is observed from. Defaults to <code>earth</code>.</td></tr>
+    </table>
+
+    <h3>Response <code>200</code></h3>
+    <pre><code>{ "x": float, "y": float }</code></pre>
+    <p class="sub"><code>x</code>, <code>y</code> are Helioprojective coordinates in arcseconds.</p>
+
+    <h3>Example</h3>
+    <pre><code>curl "https://coordinator.necdet.helioviewer.org/hgc2hpc?\
+lat=0&amp;lon=117.7&amp;coord_time=2012-01-01%2000:00:00&amp;\
+target=2012-01-01%2001:00:00&amp;observer=earth"
+
+&rarr; {"x":9.060967563950392,"y":49.638500848914674}</code></pre>
+
+    <h3>Errors</h3>
+    <table>
+      <tr><th>Status</th><th>When</th></tr>
+      <tr><td class="name">422</td><td>missing <code>lat</code>/<code>lon</code>/<code>coord_time</code>, <code>lat</code> out of range, unparseable time, or unknown <code>observer</code>.</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ============================ POST ============================ -->
+<div class="endpoint">
+  <div class="head">
+    <span class="badge post">POST</span>
+    <span class="path">/hgc2hpc</span>
+  </div>
+  <div class="body">
+    <p>Batch version of <code>GET /hgc2hpc</code>. Convert many Carrington coordinates against a single <code>target</code> and <code>observer</code>. Each coordinate keeps its own <code>coord_time</code>.</p>
+
+    <h3>Request body <code>application/json</code></h3>
+    <pre><code>{
+  "coordinates": [
+    { "lat": number, "lon": number, "coord_time": "Y-m-d H:M:S" },
+    ...
+  ],
+  "target": "Y-m-d H:M:S",
+  "observer": "earth"
+}</code></pre>
+    <table>
+      <tr><th>Field</th><th>Description</th></tr>
+      <tr><td class="name">coordinates</td><td><span class="req">required</span> &mdash; list of <code>{lat, lon, coord_time}</code>. <code>lat</code> must be <code>-90..90</code>.</td></tr>
+      <tr><td class="name">target</td><td><span class="req">required</span> &mdash; observation time applied to every coordinate.</td></tr>
+      <tr><td class="name">observer</td><td><span class="opt">optional</span> &mdash; one observer for the whole batch. Defaults to <code>earth</code>.</td></tr>
+    </table>
+
+    <h3>Response <code>200</code></h3>
+    <pre><code>{
+  "coordinates": [
+    { "x": float, "y": float },
+    ...
+  ]
+}</code></pre>
+    <p class="sub">Results are returned in the same order as the input. An empty <code>coordinates</code> list returns <code>{"coordinates": []}</code>.</p>
+
+    <h3>Example</h3>
+    <pre><code>curl -X POST https://coordinator.necdet.helioviewer.org/hgc2hpc \
+  -H "Content-Type: application/json" \
+  -d '{
+    "coordinates": [
+      {"lat": 0,   "lon": 117.7, "coord_time": "2012-01-01 00:00:00"},
+      {"lat": 10,  "lon": 20,    "coord_time": "2013-06-01 00:00:00"}
+    ],
+    "target": "2024-01-02 00:00:00",
+    "observer": "earth"
+  }'
+
+&rarr; {"coordinates":[
+     {"x":236.27066078695856,"y":-49.34282025756927},
+     {"x":926.1221795119984,"y":156.48627828330152}
+   ]}</code></pre>
+
+    <h3>Errors</h3>
+    <table>
+      <tr><th>Status</th><th>When</th></tr>
+      <tr><td class="name">422</td><td>missing <code>coordinates</code>/<code>target</code>, <code>lat</code> out of range, unparseable time, or unknown <code>observer</code>.</td></tr>
+    </table>
+  </div>
+</div>
+
+<footer>
+  Coordinator &mdash; Helioviewer Project. Heliographic Carrington &rarr; Helioprojective.
+  See also <code>GET /hgs2hpc</code> (Stonyhurst) and <code>POST /hgs2hpc</code>.
+</footer>
+
+</div>
+</body>
+</html>

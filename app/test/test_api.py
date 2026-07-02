@@ -376,6 +376,179 @@ def test_hgs2hpc_post(client: TestClient):
         assert isinstance(coord["y"], (int, float))
 
 
+def test_hgc2hpc(client: TestClient):
+    # Missing lat
+    response = client.get("/hgc2hpc?lon=0&coord_time=2012-01-01")
+    assert response.status_code == 422
+    # Missing lon
+    response = client.get("/hgc2hpc?lat=0&coord_time=2012-01-01")
+    assert response.status_code == 422
+    # Missing coord_time
+    response = client.get("/hgc2hpc?lat=0&lon=0")
+    assert response.status_code == 422
+
+    # Invalid time
+    response = client.get("/hgc2hpc?lat=0&lon=0&coord_time=NotATime")
+    assert response.status_code == 422
+
+    # Typical request returns numeric x, y. Unlike Stonyhurst, Carrington
+    # longitude 0 is not the central meridian, so x is not expected to be 0.
+    response = client.get("/hgc2hpc?lat=0&lon=0&coord_time=2012-01-01T00:00:00Z")
+    assert response.status_code == 200
+    coord = response.json()
+    assert isinstance(coord["x"], (int, float))
+    assert isinstance(coord["y"], (int, float))
+
+    # lon ~= apparent central meridian at this time, so the point starts near
+    # disk center; advancing the target by 1 hour should apply differential
+    # rotation and move the x coordinate right by ~9 arcseconds.
+    t0 = client.get(
+        "/hgc2hpc?lat=0&lon=117.7&coord_time=2012-01-01 00:00:00&target=2012-01-01 00:00:00"
+    )
+    t1 = client.get(
+        "/hgc2hpc?lat=0&lon=117.7&coord_time=2012-01-01 00:00:00&target=2012-01-01 01:00:00"
+    )
+    assert t0.status_code == 200 and t1.status_code == 200
+    dx = t1.json()["x"] - t0.json()["x"]
+    assert 8 < dx < 11
+
+    # Latitude out of range -> 422 (sunpy has no restriction on longitude)
+    response = client.get("/hgc2hpc?lat=90.1&lon=0&coord_time=2012-01-01 00:00:00")
+    assert response.status_code == 422
+    assert response.json()["detail"][0]["loc"][1] == "lat"
+
+    response = client.get("/hgc2hpc?lat=-90.1&lon=0&coord_time=2012-01-01 00:00:00")
+    assert response.status_code == 422
+    assert response.json()["detail"][0]["loc"][1] == "lat"
+
+
+def test_hgc2hpc_post(client: TestClient):
+    """
+    Test POST /hgc2hpc endpoint with batch coordinate conversion
+    """
+    # Valid batch request
+    batch_data = {
+        "coordinates": [
+            {"lat": 0.0, "lon": 0.0, "coord_time": "2012-01-01T00:00:00Z"},
+            {"lat": 10.0, "lon": 20.0, "coord_time": "2012-01-01T00:00:00Z"},
+        ],
+        "target": "2012-01-01T00:00:00Z",
+    }
+    response = client.post("/hgc2hpc", json=batch_data)
+    assert response.status_code == 200
+    data = response.json()
+    assert "coordinates" in data
+    assert len(data["coordinates"]) == 2
+    for coord in data["coordinates"]:
+        assert isinstance(coord["x"], (int, float))
+        assert isinstance(coord["y"], (int, float))
+
+    # Missing coordinates field
+    response = client.post("/hgc2hpc", json={"target": "2012-01-01T00:00:00Z"})
+    assert response.status_code == 422
+
+    # Missing target field
+    response = client.post(
+        "/hgc2hpc",
+        json={
+            "coordinates": [
+                {"lat": 0.0, "lon": 0.0, "coord_time": "2012-01-01T00:00:00Z"}
+            ]
+        },
+    )
+    assert response.status_code == 422
+
+    # Invalid latitude (> 90)
+    batch_data = {
+        "coordinates": [
+            {"lat": 90.1, "lon": 0.0, "coord_time": "2012-01-01T00:00:00Z"}
+        ],
+        "target": "2012-01-01T00:00:00Z",
+    }
+    response = client.post("/hgc2hpc", json=batch_data)
+    assert response.status_code == 422
+    assert response.json()["detail"][0]["loc"][-1] == "lat"
+
+    # Invalid time format
+    batch_data = {
+        "coordinates": [{"lat": 0.0, "lon": 0.0, "coord_time": "NotAValidTime"}],
+        "target": "2012-01-01T00:00:00Z",
+    }
+    response = client.post("/hgc2hpc", json=batch_data)
+    assert response.status_code == 422
+
+    # Empty coordinates array
+    batch_data = {"coordinates": [], "target": "2012-01-01T00:00:00Z"}
+    response = client.post("/hgc2hpc", json=batch_data)
+    assert response.status_code == 200
+    assert response.json()["coordinates"] == []
+
+
+def test_hgc2hpc_single_vs_batched(client: TestClient):
+    """
+    The GET (single) and POST (batch) endpoints must agree for the same inputs.
+    """
+    coordinates = [
+        {"lat": 0.0, "lon": 117.7, "coord_time": "2012-01-01T00:00:00Z"},
+        {"lat": 10.0, "lon": 80.0, "coord_time": "2012-01-01T00:00:00Z"},
+        {"lat": -25.0, "lon": 160.0, "coord_time": "2012-01-01T00:00:00Z"},
+    ]
+    target = "2012-01-02T00:00:00Z"
+
+    individual_results = []
+    for coord in coordinates:
+        response = client.get(
+            f"/hgc2hpc?lat={coord['lat']}&lon={coord['lon']}"
+            f"&coord_time={coord['coord_time']}&target={target}"
+        )
+        assert response.status_code == 200
+        individual_results.append(response.json())
+
+    batch_response = client.post(
+        "/hgc2hpc", json={"coordinates": coordinates, "target": target}
+    )
+    assert batch_response.status_code == 200
+    batched_results = batch_response.json()["coordinates"]
+
+    assert len(individual_results) == len(batched_results)
+    for individual, batched in zip(individual_results, batched_results):
+        assert pytest.approx(individual["x"], abs=1e-9) == batched["x"]
+        assert pytest.approx(individual["y"], abs=1e-9) == batched["y"]
+
+
+def test_hgc2hpc_observer(client: TestClient):
+    """
+    observer is optional (defaults to earth), validated against sunpy's
+    solar-system bodies, and changes the result.
+    """
+    base = "/hgc2hpc?lat=0&lon=0&coord_time=2012-01-01T00:00:00Z"
+
+    # Unknown observer -> 422 (GET and POST)
+    assert client.get(base + "&observer=notabody").status_code == 422
+    batch = {
+        "coordinates": [{"lat": 0.0, "lon": 0.0, "coord_time": "2012-01-01T00:00:00Z"}],
+        "target": "2012-01-01T00:00:00Z",
+        "observer": "notabody",
+    }
+    assert client.post("/hgc2hpc", json=batch).status_code == 422
+
+    # Omitting observer is the same as observer=earth (the default)
+    default = client.get(base).json()
+    earth = client.get(base + "&observer=earth").json()
+    assert default == earth
+
+    # Observer is case-insensitive
+    assert client.get(base + "&observer=EARTH").json() == earth
+
+    # A valid non-earth observer is accepted and shifts the result
+    mars = client.get(base + "&observer=mars").json()
+    assert abs(mars["x"] - earth["x"]) > 0.1
+
+    # Observer is also accepted (once) in the batch body
+    batch["observer"] = "mars"
+    assert client.post("/hgc2hpc", json=batch).status_code == 200
+
+
 def test_healthcheck(client: TestClient):
     assert client.get("/health-check").text == '"success"'
 
