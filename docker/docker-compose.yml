@@ -10,7 +10,7 @@ services:
     volumes:
       - ../app:/home/nonroot/app
     environment:
-      - FASTAPI_ENV=${FASTAPI_ENV:-development}
+      - FASTAPI_ENV=${FASTAPI_ENV:-production}
       - PYTHONPATH=/home/nonroot/app
       # nginx-proxy + acme-companion (Let's Encrypt) routing.
       # Values come from .env at the repo root (copy .env.example to .env).
