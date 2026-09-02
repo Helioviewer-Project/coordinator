@@ -39,6 +39,63 @@ Returns:
 { x: float, y: float }
 ```
 
+### GET /hgc2hpc
+
+Convert a heliographic carrington coordinate into a helioprojective coordinate.
+Carrington longitude is observer-dependent (it accounts for light travel time),
+so an observer is required; it defaults to earth.
+
+| query parameter | description |
+|-----------------|-------------|
+| lat             | Latitude coordinate in degrees |
+| lon             | Carrington longitude coordinate in degrees |
+| coord_time      | Time that the measurement was taken |
+| target          | (Optional) Desired observation time. Applies differential rotation |
+| observer        | (Optional) Solar-system body the coordinate is observed from (case-insensitive). Defaults to earth. See [valid observers](#valid-observers) below; any other value returns 422 |
+
+Returns:
+```
+{ x: float, y: float }
+```
+
+#### Valid observers
+
+`observer` (on both the GET and POST routes) must be one of the solar-system
+bodies sunpy can resolve (case-insensitive). Any other value returns HTTP 422.
+
+```
+earth, earth-moon-barycenter, jupiter, mars, mercury, moon,
+neptune, saturn, sun, uranus, venus
+```
+
+### POST /hgc2hpc
+
+Batch version of `GET /hgc2hpc`: convert a list of heliographic carrington
+coordinates (one or more) against a single target observation time. The
+optional `observer` applies to every coordinate in the batch, defaults to
+earth, and follows the same [valid observers](#valid-observers) rule.
+
+```json
+{
+    "coordinates": [
+        { "lat": 0, "lon": 117.7, "coord_time": "2012-01-01 00:00:00" },
+        { "lat": 10, "lon": 20, "coord_time": "2013-06-01 00:00:00" }
+    ],
+    "target": "2024-01-02 00:00:00",
+    "observer": "earth"
+}
+```
+
+Returns:
+```json
+{
+    "coordinates": [
+        { "x": float, "y": float },
+        ...
+    ]
+}
+```
+
 ### GET /hpc
 
 Normalize a helioprojective coordinate into Helioviewer's coordinate frame.
@@ -55,7 +112,7 @@ Returns:
 { x: float, y: float }
 ```
 
-### POST /gse
+### POST /gse2frame
 
 Transforms a list of GSE coordinates to Heliographic Stonyhurst coordinates using
 a constant frame of reference. The reference frame is the coordinate frame used
@@ -88,6 +145,26 @@ Returns the same format, but with the point in the new coordinate frame
             "z": number,
             "time: string (Y-m-d H:M:S)
         },
+        ...
+    ]
+}
+```
+
+### GET /position/{observatory}
+
+Get the position of an observatory over a time range. The `observatory` path
+parameter is any body sunpy can resolve (e.g. `SDO`, `SOHO`, `STEREO_A`).
+
+| query parameter | description |
+|-----------------|-------------|
+| start           | Start of the time range |
+| stop            | End of the time range |
+
+Returns a list of positions (in kilometers) in Helioviewer's 3D frame:
+```json
+{
+    "coordinates": [
+        { "x": number, "y": number, "z": number, "time": "Y-m-d H:M:S" },
         ...
     ]
 }

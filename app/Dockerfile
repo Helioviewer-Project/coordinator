@@ -2,10 +2,15 @@
 FROM condaforge/mambaforge AS builder
 
 WORKDIR /build
-COPY requirements.txt .
+COPY requirements.txt requirements-dev.txt ./
 
 # This is where pip will be after the conda environment is created
 ENV PIP=/opt/conda/envs/coordinator/bin/pip
+
+# The dev docker-compose passes FASTAPI_ENV=development (from .env); when it is
+# development we also install dev tools (black, pytest, coverage). Defaults to
+# production so the published image stays lean.
+ARG FASTAPI_ENV=production
 
 # Create conda environment and install dependencies
 RUN mamba create -n coordinator -y python=3.13.5 gcc \
@@ -17,6 +22,9 @@ RUN mamba create -n coordinator -y python=3.13.5 gcc \
     && mamba run -n coordinator pip install --no-cache-dir . \
     && cd /build \
     && mamba run -n coordinator pip install --no-cache-dir -r requirements.txt \
+    && if [ "$FASTAPI_ENV" = "development" ]; then \
+         mamba run -n coordinator pip install --no-cache-dir -r requirements-dev.txt; \
+       fi \
     && rm -rf /tmp/sunpy
 
 # Final stage - minimal runtime image

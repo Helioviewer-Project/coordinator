@@ -1,1 +1,5 @@
 __pycache__
+
+# Local instance config — keep personal domain/email out of the repo.
+.env
+!.env.example

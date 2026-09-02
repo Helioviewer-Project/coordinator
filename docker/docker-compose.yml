@@ -1,0 +1,31 @@
+name: coordinator
+
+services:
+  app:
+    build:
+      context: ../app
+      args:
+        FASTAPI_ENV: ${FASTAPI_ENV:-production}
+    user: "${UID}:${GID}"
+    environment:
+      - FASTAPI_ENV=${FASTAPI_ENV:-production}
+      - PYTHONPATH=/home/nonroot/app
+      # nginx-proxy + acme-companion (Let's Encrypt) routing.
+      # Values come from .env at the repo root (copy .env.example to .env).
+      # Same convention as the events-api compose.
+      - VIRTUAL_HOST=${VIRTUAL_HOST}
+      - VIRTUAL_PORT=${VIRTUAL_PORT:-80}
+      - LETSENCRYPT_HOST=${LETSENCRYPT_HOST}
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+    # Production server: no reload, multiple workers, and trust the reverse
+    # proxy's forwarded headers (we run behind nginx-proxy / TLS termination).
+    # https://fastapi.tiangolo.com/deployment/docker/#behind-a-tls-termination-proxy
+    # Local development overrides this via docker/docker-compose.dev.override.yml.
+    command: ["-m", "fastapi", "run", "main.py", "--proxy-headers", "--host", "0.0.0.0", "--port", "80", "--workers", "4"]
+    networks:
+      - nginx-proxy
+    restart: unless-stopped
+
+networks:
+  nginx-proxy:
+    external: true

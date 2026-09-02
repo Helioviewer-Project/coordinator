@@ -1,3 +1,4 @@
 black==26.3.1
+flake8
 pytest==9.0.3
 coverage==7.13.3
