@@ -5,15 +5,22 @@ GID := $(shell id -g)
 # loaded from .env (copy .env.example to .env and edit it).
 # UID/GID are passed via the shell environment so they take precedence over
 # anything in the env-file.
-#
-# The base compose is the production config (fastapi run). Unless .env selects
-# FASTAPI_ENV=production, layer docker-compose.dev.override.yml on top so local runs get
-# the source bind-mount + reload server (fastapi dev).
+# Read FASTAPI_ENV from .env (blank if the file or line is missing).
 FASTAPI_ENV := $(shell [ -f .env ] && grep -E '^FASTAPI_ENV=' .env | cut -d= -f2)
+# Blank defaults to production, matching the compose ${FASTAPI_ENV:-production}.
+FASTAPI_ENV := $(or $(FASTAPI_ENV),production)
+# Reject anything that isn't exactly production or development (catches typos).
+ifeq ($(filter $(FASTAPI_ENV),production development),)
+$(error FASTAPI_ENV in .env must be 'production' or 'development' (got '$(FASTAPI_ENV)'))
+endif
+
+# Start from the base (production) compose file.
 COMPOSE_FILES := -f docker/docker-compose.yml
-ifneq ($(FASTAPI_ENV),production)
+# Add the dev overlay (source mount + fastapi dev reload) only in development.
+ifeq ($(FASTAPI_ENV),development)
 COMPOSE_FILES += -f docker/docker-compose.dev.override.yml
 endif
+# The compose invocation every target runs through.
 DOCKER_COMPOSE := UID=$(UID) GID=$(GID) docker compose $(COMPOSE_FILES) --env-file .env
 
 .PHONY: up down logs status build test shell format lint check help
