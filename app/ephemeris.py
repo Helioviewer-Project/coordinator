@@ -2,7 +2,6 @@ import astropy.units as u
 from astropy.time import Time
 from sunpy.coordinates import get_horizons_coord
 
-
 # JPL Horizons treats a bare major-body name as a wildcard, so "earth" becomes
 # "EARTH*" and matches both the planet's body center and its planet-moon
 # barycenter (e.g. "Earth" (399) and "Earth-Moon Barycenter" (3)). That
