@@ -11,17 +11,17 @@ from sunpy.coordinates import get_horizons_coord
 # geocenter (399). Spacecraft names (e.g. "SDO") are already unambiguous and
 # pass through untouched.
 _HORIZONS_BODY_IDS = {
-    "sun": 10,
-    "mercury": 199,
-    "venus": 299,
-    "earth": 399,
-    "moon": 301,
-    "mars": 499,
-    "jupiter": 599,
-    "saturn": 699,
-    "uranus": 799,
-    "neptune": 899,
-    "pluto": 999,
+    "sun": 10,  # Sun (no barycenter ambiguity)
+    "mercury": 199,  # Mercury body center, not Mercury Barycenter (1)
+    "venus": 299,  # Venus body center, not Venus Barycenter (2)
+    "earth": 399,  # Earth geocenter, not Earth-Moon Barycenter (3)
+    "moon": 301,  # Moon (Earth's moon) body center
+    "mars": 499,  # Mars body center, not Mars Barycenter (4)
+    "jupiter": 599,  # Jupiter body center, not Jupiter Barycenter (5)
+    "saturn": 699,  # Saturn body center, not Saturn Barycenter (6)
+    "uranus": 799,  # Uranus body center, not Uranus Barycenter (7)
+    "neptune": 899,  # Neptune body center, not Neptune Barycenter (8)
+    "pluto": 999,  # Pluto body center, not Pluto Barycenter (9)
 }
 
 
