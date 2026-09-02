@@ -1,0 +1,10 @@
+# Development overlay for docker-compose.yml.
+#
+# The Makefile layers this file on top of the base (production) compose whenever
+# .env does NOT set FASTAPI_ENV=production. It bind-mounts the source and swaps
+# the production server for `fastapi dev`, so local code edits reload live.
+services:
+  app:
+    volumes:
+      - ../app:/home/nonroot/app
+    command: ["-m", "fastapi", "dev", "--host", "0.0.0.0", "--port", "80", "main.py"]

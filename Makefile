@@ -5,7 +5,16 @@ GID := $(shell id -g)
 # loaded from .env (copy .env.example to .env and edit it).
 # UID/GID are passed via the shell environment so they take precedence over
 # anything in the env-file.
-DOCKER_COMPOSE := UID=$(UID) GID=$(GID) docker compose -f docker/docker-compose.yml --env-file .env
+#
+# The base compose is the production config (fastapi run). Unless .env selects
+# FASTAPI_ENV=production, layer docker-compose.dev.override.yml on top so local runs get
+# the source bind-mount + reload server (fastapi dev).
+FASTAPI_ENV := $(shell [ -f .env ] && grep -E '^FASTAPI_ENV=' .env | cut -d= -f2)
+COMPOSE_FILES := -f docker/docker-compose.yml
+ifneq ($(FASTAPI_ENV),production)
+COMPOSE_FILES += -f docker/docker-compose.dev.override.yml
+endif
+DOCKER_COMPOSE := UID=$(UID) GID=$(GID) docker compose $(COMPOSE_FILES) --env-file .env
 
 .PHONY: up down logs status build test shell format lint check help
 
