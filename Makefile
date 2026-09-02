@@ -54,8 +54,8 @@ build: .env ## Build the docker image
 test: .env ## Run pytest in docker
 	$(DOCKER_COMPOSE) run --rm app -m pytest test/ -v
 
-shell: .env ## Open a bash shell in the container
-	$(DOCKER_COMPOSE) run --rm --entrypoint /bin/bash app
+shell: .env ## Open a bash shell in the running container (run `make up` first)
+	$(DOCKER_COMPOSE) exec app /bin/bash
 
 format: .env ## Format code with black
 	$(DOCKER_COMPOSE) run --rm app -m black .
