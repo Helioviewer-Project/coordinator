@@ -127,8 +127,12 @@ def test_hpc_post(client: TestClient):
     for coord in data["coordinates"]:
         assert "x" in coord
         assert "y" in coord
+        assert "visible" in coord
         assert isinstance(coord["x"], (int, float))
         assert isinstance(coord["y"], (int, float))
+        # Must be a real bool: a numpy bool makes FastAPI return a 500, and
+        # isinstance(True, int) means an (int, float) check would not catch it.
+        assert isinstance(coord["visible"], bool)
 
     # Test batch results match individual GET results
     batch_data = {
@@ -216,6 +220,9 @@ def test_hpc_single_vs_batched(client: TestClient):
         assert (
             pytest.approx(individual["y"], abs=1e-10) == batched["y"]
         ), f"Mismatch at index {i}: y values differ"
+        assert (
+            individual["visible"] == batched["visible"]
+        ), f"Mismatch at index {i}: visible differs"
 
 
 def test_hgs2hpc(client: TestClient):
@@ -372,8 +379,12 @@ def test_hgs2hpc_post(client: TestClient):
     for coord in data["coordinates"]:
         assert "x" in coord
         assert "y" in coord
+        assert "visible" in coord
         assert isinstance(coord["x"], (int, float))
         assert isinstance(coord["y"], (int, float))
+        # Must be a real bool: a numpy bool makes FastAPI return a 500, and
+        # isinstance(True, int) means an (int, float) check would not catch it.
+        assert isinstance(coord["visible"], bool)
 
 
 def test_hgc2hpc(client: TestClient):
@@ -442,6 +453,7 @@ def test_hgc2hpc_post(client: TestClient):
     for coord in data["coordinates"]:
         assert isinstance(coord["x"], (int, float))
         assert isinstance(coord["y"], (int, float))
+        assert isinstance(coord["visible"], bool)
 
     # Missing coordinates field
     response = client.post("/hgc2hpc", json={"target": "2012-01-01T00:00:00Z"})
@@ -547,6 +559,104 @@ def test_hgc2hpc_observer(client: TestClient):
     # Observer is also accepted (once) in the batch body
     batch["observer"] = "mars"
     assert client.post("/hgc2hpc", json=batch).status_code == 200
+
+
+def test_hgs2hpc_visibility(client: TestClient):
+    """
+    Helioprojective is a projection, so a point behind the Sun lands back
+    inside the disk. `visible` is what distinguishes it from a near-side point.
+    """
+    t = "2012-06-01 00:00:00"
+
+    # Disk centre, plainly visible.
+    front = client.get(f"/hgs2hpc?lat=0&lon=0&coord_time={t}").json()
+    assert front["visible"] is True
+
+    # lon=90 is already hidden: the limb sits at arccos(rsun/D) ~= 89.73 deg,
+    # so the visible cap is slightly smaller than a hemisphere.
+    limb = client.get(f"/hgs2hpc?lat=0&lon=90&coord_time={t}").json()
+    assert limb["visible"] is False
+
+    # Behind the Sun, yet x=477" is well inside the ~945" disk -- exactly the
+    # case that looks on-disk without this flag.
+    behind = client.get(f"/hgs2hpc?lat=0&lon=150&coord_time={t}").json()
+    assert behind["visible"] is False
+    assert pytest.approx(behind["x"], abs=1e-3) == 477.6893
+
+
+def test_hgc2hpc_visibility(client: TestClient):
+    t = "2012-06-01 00:00:00"
+
+    front = client.get(f"/hgc2hpc?lat=0&lon=272.85&coord_time={t}").json()
+    assert front["visible"] is True
+
+    behind = client.get(f"/hgc2hpc?lat=0&lon=92.85&coord_time={t}").json()
+    assert behind["visible"] is False
+
+    # observer only resolves the input Carrington longitude. Visibility is
+    # always judged from Helioviewer's observer, so it must not change here.
+    mars = client.get(f"/hgc2hpc?lat=0&lon=92.85&coord_time={t}&observer=mars").json()
+    assert mars["visible"] is False
+
+
+def test_hpc_visibility(client: TestClient):
+    t = "2012-06-01 00:00:00"
+
+    centre = client.get(f"/hpc?x=0&y=0&coord_time={t}").json()
+    assert centre["visible"] is True
+
+    # A near-limb feature rotated 8 days forward ends up behind the Sun, but
+    # projects back to x=19" -- indistinguishable from disk centre without it.
+    rotated = client.get(
+        "/hpc?x=900&y=0&coord_time=2012-06-01&target=2012-06-09"
+    ).json()
+    assert rotated["visible"] is False
+    assert pytest.approx(rotated["x"], abs=1e-3) == 19.4480
+
+    # Off-disk (beyond the ~945" limb) is visible regardless of depth. This is
+    # the regression test against reimplementing `visible` as distance > 1 AU.
+    off_disk = client.get(f"/hpc?x=2000&y=0&coord_time={t}").json()
+    assert off_disk["visible"] is True
+
+
+def test_visibility_single_vs_batched(client: TestClient):
+    """
+    The vectorised is_visible() used by the batch endpoints must agree with the
+    scalar path and keep the input order.
+    """
+    t = "2012-06-01 00:00:00"
+
+    coords = [
+        {"lat": 0.0, "lon": 0.0, "coord_time": t},
+        {"lat": 0.0, "lon": 90.0, "coord_time": t},
+        {"lat": 0.0, "lon": 150.0, "coord_time": t},
+    ]
+    batched = client.post("/hgs2hpc", json={"coordinates": coords, "target": t}).json()
+    assert [c["visible"] for c in batched["coordinates"]] == [True, False, False]
+    for coord, result in zip(coords, batched["coordinates"]):
+        single = client.get(
+            f"/hgs2hpc?lat={coord['lat']}&lon={coord['lon']}&coord_time={t}&target={t}"
+        ).json()
+        assert single["visible"] == result["visible"]
+
+    coords = [
+        {"lat": 0.0, "lon": 272.85, "coord_time": t},
+        {"lat": 0.0, "lon": 92.85, "coord_time": t},
+    ]
+    batched = client.post("/hgc2hpc", json={"coordinates": coords, "target": t}).json()
+    assert [c["visible"] for c in batched["coordinates"]] == [True, False]
+
+    # A single-element batch stays an array (shape (1,)); it does not collapse
+    # to a scalar coordinate.
+    batched = client.post(
+        "/hpc",
+        json={
+            "coordinates": [{"x": 900, "y": 0, "coord_time": "2012-06-01"}],
+            "target": "2012-06-09",
+        },
+    ).json()
+    assert len(batched["coordinates"]) == 1
+    assert batched["coordinates"][0]["visible"] is False
 
 
 def test_healthcheck(client: TestClient):
