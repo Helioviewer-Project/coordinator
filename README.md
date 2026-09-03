@@ -36,8 +36,9 @@ Convert a heliographic stonyhurst coordinate into a helioprojective coordinate.
 
 Returns:
 ```
-{ x: float, y: float }
+{ x: float, y: float, visible: bool }
 ```
+See [Visibility](#visibility) for what `visible` means.
 
 ### GET /hgc2hpc
 
@@ -55,8 +56,9 @@ so an observer is required; it defaults to earth.
 
 Returns:
 ```
-{ x: float, y: float }
+{ x: float, y: float, visible: bool }
 ```
+See [Visibility](#visibility) for what `visible` means.
 
 #### Valid observers
 
@@ -90,11 +92,12 @@ Returns:
 ```json
 {
     "coordinates": [
-        { "x": float, "y": float },
+        { "x": float, "y": float, "visible": bool },
         ...
     ]
 }
 ```
+See [Visibility](#visibility) for what `visible` means.
 
 ### GET /hpc
 
@@ -109,8 +112,36 @@ Normalize a helioprojective coordinate into Helioviewer's coordinate frame.
 
 Returns:
 ```
-{ x: float, y: float }
+{ x: float, y: float, visible: bool }
 ```
+See [Visibility](#visibility) for what `visible` means.
+
+### Visibility
+
+Every helioprojective response (`/hgs2hpc`, `/hgc2hpc`, `/hpc`; GET and POST)
+includes a `visible` boolean: `false` means the opaque Sun hides the point from
+Helioviewer's observer.
+
+Helioprojective `(x, y)` is a projection onto the plane of the sky, so a point
+on the *far* side of the Sun projects back inside the solar disk and is
+otherwise indistinguishable from a near-side point at the same `(x, y)`. For
+example, a Stonyhurst coordinate at `lon=150` on 2012-06-01 returns
+`x = 477.7`, `y = -9.1` — comfortably inside the ~945 arcsecond disk — but
+`"visible": false`.
+
+Caveats:
+
+* **`visible` is not "on-disk".** A point beyond the limb is visible at any
+  depth. To test for on-disk, compare `sqrt(x² + y²)` against the apparent
+  solar radius (~945 arcseconds at 1 AU).
+* **The visible cap is slightly smaller than a hemisphere.** The limb sits at
+  `arccos(rsun / D) ≈ 89.73°`, so a Stonyhurst point at `lon=90` is already
+  `"visible": false`.
+* **On `/hgc2hpc`, `observer` does not affect `visible`.** It only resolves the
+  input Carrington longitude's light-travel correction; visibility is always
+  judged from Helioviewer's observer.
+* `visible` is evaluated **after** differential rotation to `target`, so a
+  feature visible at `coord_time` may be hidden at a later `target`.
 
 ### POST /gse2frame
 
