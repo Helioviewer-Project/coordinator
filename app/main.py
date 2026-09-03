@@ -8,6 +8,7 @@ from pydantic import ConfigDict, Field
 from hgs2hpc import hgs2hpc, hgs2hpc_batch
 from hgc2hpc import hgc2hpc, hgc2hpc_batch
 from normalizer import normalize_hpc, normalize_hpc_batch, gse_frame, jsonify_skycoord
+from hpc_response import hpc_dict
 from ephemeris import get_position
 from validation import AstropyTime, HvBaseModel, SunpyObserver, VALID_OBSERVERS
 
@@ -46,7 +47,7 @@ def _hgs2hpc(params: Annotated[Hgs2HpcQueryParameters, Query()]):
     "Convert a latitude/longitude coordinate to the equivalent helioprojective coordinate at the given target time"
     #    try:
     coord = hgs2hpc(params.lat, params.lon, params.coord_time, params.target)
-    return {"x": coord.Tx.value, "y": coord.Ty.value}
+    return hpc_dict(coord)
 
 
 class Hgs2HpcCoordInput(HvBaseModel):
@@ -107,7 +108,7 @@ def _hgc2hpc(params: Annotated[Hgc2HpcQueryParameters, Query()]):
     coord = hgc2hpc(
         params.lat, params.lon, params.coord_time, params.target, params.observer
     )
-    return {"x": coord.Tx.value, "y": coord.Ty.value}
+    return hpc_dict(coord)
 
 
 class Hgc2HpcCoordInput(HvBaseModel):
@@ -171,7 +172,7 @@ class NormalizeHpcQueryParameters(HvBaseModel):
 @app.get("/hpc", summary="Get HPC coordinate for Helioviewer POV")
 def _normalize_hpc(params: Annotated[NormalizeHpcQueryParameters, Query()]):
     coord = normalize_hpc(params.x, params.y, params.coord_time, params.target)
-    return {"x": coord.Tx.value, "y": coord.Ty.value}
+    return hpc_dict(coord)
 
 
 class HpcCoordInput(HvBaseModel):
