@@ -43,10 +43,11 @@ Convert a single Carrington coordinate to a Helioprojective coordinate.
 | `target` | string | optional — desired observation time; applies differential rotation. Defaults to `coord_time`. |
 | `observer` | string | optional — solar-system body the coordinate is observed from. Defaults to `earth`. |
 
-**Response `200`** — `x`, `y` in arcseconds:
+**Response `200`** — `x`, `y` in arcseconds, plus a `visible` flag
+(see [Visibility](#visibility)):
 
 ```json
-{ "x": 9.060967563950392, "y": 49.638500848914674 }
+{ "x": 9.060967563950392, "y": 49.638500848914674, "visible": true }
 ```
 
 **Example:**
@@ -83,20 +84,48 @@ against a single `target` and `observer`; each coordinate keeps its own
 | `target` | **required** — observation time applied to every coordinate. |
 | `observer` | optional — one observer for the whole batch. Defaults to `earth`. |
 
-**Response `200`** — one `{x, y}` per input, in the same order; an empty list
-returns `{"coordinates": []}`:
+**Response `200`** — one `{x, y, visible}` per input, in the same order; an
+empty list returns `{"coordinates": []}`:
 
 ```json
 {
   "coordinates": [
-    { "x": 236.27, "y": -49.34 },
-    { "x": 926.12, "y": 156.49 }
+    { "x": 236.27, "y": -49.34, "visible": false },
+    { "x": 926.12, "y": 156.49, "visible": false }
   ]
 }
 ```
 
+Both coordinates in this example are on the far side of the Sun at the target
+time — note that the first still projects to `x = 236″`, well inside the disk.
+That is exactly what `visible` is for.
+
 **Errors** — `422` for missing `coordinates`/`target`, `lat` out of range, an
 unparseable time, or an unknown `observer`.
+
+## Visibility
+
+Every response carries a `visible` boolean: `false` means the opaque Sun hides
+the point from Helioviewer's observer.
+
+Helioprojective `(x, y)` is a projection onto the plane of the sky, so a point
+on the far side of the Sun projects back *inside* the solar disk and is
+otherwise indistinguishable from a near-side point at the same `(x, y)`. This
+bites especially hard for Carrington coordinates, because Carrington longitude
+is fixed to the rotating Sun — roughly half of all longitudes are on the far
+side at any given time.
+
+- **`visible` is not "on-disk".** A point beyond the limb is visible at any
+  depth. To test for on-disk, compare `sqrt(x² + y²)` against the apparent
+  solar radius (~945 arcseconds at 1 AU).
+- **The visible cap is slightly smaller than a hemisphere** — the limb sits at
+  `arccos(rsun / D) ≈ 89.73°`, not 90°.
+- **`observer` does not affect `visible`.** It only resolves the input
+  Carrington longitude's light-travel correction; visibility is always judged
+  from Helioviewer's observer. `observer=mars` changes how the input longitude
+  is interpreted, not who is looking.
+- `visible` is evaluated **after** differential rotation to `target`, so a
+  feature visible at `coord_time` may be hidden at a later `target`.
 
 ---
 

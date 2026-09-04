@@ -8,6 +8,7 @@ from pydantic import ConfigDict, Field
 from hgs2hpc import hgs2hpc, hgs2hpc_batch
 from hgc2hpc import hgc2hpc, hgc2hpc_batch
 from normalizer import normalize_hpc, normalize_hpc_batch, gse_frame, jsonify_skycoord
+from hpc_response import hpc_dict
 from ephemeris import get_position
 from validation import AstropyTime, HvBaseModel, SunpyObserver, VALID_OBSERVERS
 
@@ -22,6 +23,36 @@ app.add_middleware(
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
+
+# The helioprojective handlers deliberately have no response_model: FastAPI
+# would then filter the response down to the declared fields, so any key added
+# later would be silently dropped, and it would push every item of a batch
+# through pydantic validation. These OpenAPI-only examples document the shape
+# in /docs without imposing either.
+_HPC_RESPONSE = {
+    200: {
+        "content": {
+            "application/json": {
+                "example": {"x": 477.6893, "y": -9.1213, "visible": False}
+            }
+        }
+    }
+}
+
+_HPC_BATCH_RESPONSE = {
+    200: {
+        "content": {
+            "application/json": {
+                "example": {
+                    "coordinates": [
+                        {"x": 0.0, "y": 10.6243, "visible": True},
+                        {"x": 477.6893, "y": -9.1213, "visible": False},
+                    ]
+                }
+            }
+        }
+    }
+}
 
 
 class Hgs2HpcQueryParameters(HvBaseModel):
@@ -40,13 +71,14 @@ class Hgs2HpcQueryParameters(HvBaseModel):
 @app.get(
     "/hgs2hpc",
     summary="Convert Heliographic Stonyhurst coordinate to Helioprojective coordinate in Helioviewer's POV",
+    responses=_HPC_RESPONSE,
 )
 # def _hgs2hpc(lat: float, lon: float, coord_time: str, target: Union[str, None] = None):
 def _hgs2hpc(params: Annotated[Hgs2HpcQueryParameters, Query()]):
     "Convert a latitude/longitude coordinate to the equivalent helioprojective coordinate at the given target time"
     #    try:
     coord = hgs2hpc(params.lat, params.lon, params.coord_time, params.target)
-    return {"x": coord.Tx.value, "y": coord.Ty.value}
+    return hpc_dict(coord)
 
 
 class Hgs2HpcCoordInput(HvBaseModel):
@@ -63,6 +95,7 @@ class Hgs2HpcBatchInput(HvBaseModel):
 @app.post(
     "/hgs2hpc",
     summary="Convert Heliographic Stonyhurst coordinate to Helioprojective coordinate in Helioviewer's POV",
+    responses=_HPC_BATCH_RESPONSE,
 )
 def _hgs2hpc_post(params: Hgs2HpcBatchInput):
     "Convert a latitude/longitude coordinate to the equivalent helioprojective coordinate at the given target time"
@@ -101,13 +134,14 @@ class Hgc2HpcQueryParameters(HvBaseModel):
 @app.get(
     "/hgc2hpc",
     summary="Convert Heliographic Carrington coordinate to Helioprojective coordinate in Helioviewer's POV",
+    responses=_HPC_RESPONSE,
 )
 def _hgc2hpc(params: Annotated[Hgc2HpcQueryParameters, Query()]):
     "Convert a Carrington latitude/longitude coordinate to the equivalent helioprojective coordinate at the given target time"
     coord = hgc2hpc(
         params.lat, params.lon, params.coord_time, params.target, params.observer
     )
-    return {"x": coord.Tx.value, "y": coord.Ty.value}
+    return hpc_dict(coord)
 
 
 class Hgc2HpcCoordInput(HvBaseModel):
@@ -142,6 +176,7 @@ class Hgc2HpcBatchInput(HvBaseModel):
 @app.post(
     "/hgc2hpc",
     summary="Convert Heliographic Carrington coordinate to Helioprojective coordinate in Helioviewer's POV",
+    responses=_HPC_BATCH_RESPONSE,
 )
 def _hgc2hpc_post(params: Hgc2HpcBatchInput):
     "Convert Carrington latitude/longitude coordinates to the equivalent helioprojective coordinates at the given target time"
@@ -168,10 +203,14 @@ class NormalizeHpcQueryParameters(HvBaseModel):
             self.target = self.coord_time
 
 
-@app.get("/hpc", summary="Get HPC coordinate for Helioviewer POV")
+@app.get(
+    "/hpc",
+    summary="Get HPC coordinate for Helioviewer POV",
+    responses=_HPC_RESPONSE,
+)
 def _normalize_hpc(params: Annotated[NormalizeHpcQueryParameters, Query()]):
     coord = normalize_hpc(params.x, params.y, params.coord_time, params.target)
-    return {"x": coord.Tx.value, "y": coord.Ty.value}
+    return hpc_dict(coord)
 
 
 class HpcCoordInput(HvBaseModel):
@@ -185,7 +224,11 @@ class HpcBatchInput(HvBaseModel):
     target: AstropyTime
 
 
-@app.post("/hpc", summary="Batch normalize HPC coordinates for Helioviewer POV")
+@app.post(
+    "/hpc",
+    summary="Batch normalize HPC coordinates for Helioviewer POV",
+    responses=_HPC_BATCH_RESPONSE,
+)
 def _normalize_hpc_post(params: HpcBatchInput):
     "Normalize multiple HPC coordinates to Helioviewer's POV at the given target time"
     coords_input = [

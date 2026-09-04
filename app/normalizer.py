@@ -9,6 +9,7 @@ from sunpy.coordinates import (
 from sunpy.coordinates.screens import SphericalScreen
 from sunpy.physics.differential_rotation import solar_rotate_coordinate
 from frames import get_helioviewer_frame, get_earth_frame, get_3d_frame
+from hpc_response import hpc_dicts
 
 
 def normalize_hpc(x: float, y: float, coord_time: Time, target: Time) -> SkyCoord:
@@ -31,6 +32,9 @@ def normalize_hpc(x: float, y: float, coord_time: Time, target: Time) -> SkyCoor
     with transform_with_sun_center():
         earth_frame = get_earth_frame(coord_time)
         hv_frame = get_helioviewer_frame(target)
+        # The screen gives off-disk points a distance. Without it they are NaN,
+        # which makes x/y NaN (invalid JSON) and makes is_visible() silently
+        # report False. Do not remove it.
         with SphericalScreen(earth_frame.observer, only_off_disk=True):
             real_coord = SkyCoord(x * u.arcsecond, y * u.arcsecond, frame=earth_frame)
             return solar_rotate_coordinate(real_coord, hv_frame.observer)
@@ -50,7 +54,8 @@ def normalize_hpc_batch(coordinates: List[Dict], target: Time) -> List[Dict]:
     Returns
     -------
     List[Dict]
-        List of results with keys: x, y
+        One {"x", "y", "visible"} per input coordinate, in the same order as
+        the input. See :mod:`hpc_response` for what "visible" means.
     """
     if not coordinates:
         return []
@@ -63,6 +68,9 @@ def normalize_hpc_batch(coordinates: List[Dict], target: Time) -> List[Dict]:
         coord_times = [c["coord_time"] for c in coordinates]
 
         earth_frame = get_earth_frame(coord_times)
+        # The screen gives off-disk points a distance. Without it they are NaN,
+        # which makes x/y NaN (invalid JSON) and makes is_visible() silently
+        # report False. Do not remove it.
         with SphericalScreen(earth_frame.observer, only_off_disk=True):
             real_coord = SkyCoord(
                 xs,
@@ -71,7 +79,7 @@ def normalize_hpc_batch(coordinates: List[Dict], target: Time) -> List[Dict]:
                 frame=earth_frame,
             )
             result = solar_rotate_coordinate(real_coord, hv_frame.observer)
-    return [{"x": c.Tx.value.item(), "y": c.Ty.value.item()} for c in result]
+    return hpc_dicts(result)
 
 
 def skycoord_to_3dframe(coord: SkyCoord) -> SkyCoord:

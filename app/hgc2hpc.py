@@ -32,6 +32,7 @@ from sunpy.physics.differential_rotation import solar_rotate_coordinate
 from typing import List, Dict
 
 from frames import get_helioviewer_frame, get_earth_frame
+from hpc_response import hpc_dicts
 
 
 def hgc2hpc(
@@ -103,8 +104,9 @@ def hgc2hpc_batch(
     Returns
     -------
     List[Dict]
-        One ``{"x": ..., "y": ...}`` (arcseconds) per input coordinate, in the
-        same order as the input.
+        One ``{"x", "y", "visible"}`` per input coordinate, in the same order
+        as the input. x/y are arcseconds; see :mod:`hpc_response` for what
+        "visible" means.
     """
     if not coordinates:
         return []
@@ -131,6 +133,4 @@ def hgc2hpc_batch(
         earth_frame = get_earth_frame(coord_time)
         hpc = coord.transform_to(earth_frame)
         result = solar_rotate_coordinate(hpc, hv_frame.observer)
-    # .item() unwraps each 0-d numpy scalar into a plain Python float so the
-    # response serialises cleanly to JSON.
-    return [{"x": c.Tx.value.item(), "y": c.Ty.value.item()} for c in result]
+    return hpc_dicts(result)
